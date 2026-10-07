@@ -49,8 +49,20 @@ class Game {
     this.lastTime = 0;
     this.spawnTimer = 0;
 
+    // Virtuální joystick (pro mobily / dotyk)
+    this.joystick = {
+      active: false,
+      touchId: null,
+      startX: 0,
+      startY: 0,
+      inputX: 0,
+      inputY: 0,
+      maxRadius: 45
+    };
+
     // UI reference
     this.setupUI();
+    this.setupJoystick();
   }
 
   resizeCanvas() {
@@ -110,6 +122,93 @@ class Game {
       const isMuted = window.sound.toggleMute();
       audioBtn.textContent = isMuted ? '🔇' : '🔊';
     });
+  }
+
+  setupJoystick() {
+    const zone = document.getElementById('joystick-zone');
+    const base = document.getElementById('joystick-base');
+    const thumb = document.getElementById('joystick-thumb');
+
+    // Automatická detekce dotykového zařízení
+    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    if (isTouchDevice) {
+      zone.classList.remove('hidden');
+    }
+
+    // Pokud uživatel poprvé tapne na obrazovku na mobilu, joystick se zviditelní
+    window.addEventListener('touchstart', () => {
+      if (zone.classList.contains('hidden')) {
+        zone.classList.remove('hidden');
+      }
+    }, { once: true });
+
+    const handleTouchStart = (e) => {
+      e.preventDefault();
+      if (this.joystick.active) return;
+      const touch = e.changedTouches[0];
+      this.joystick.touchId = touch.identifier;
+      this.joystick.active = true;
+
+      const rect = base.getBoundingClientRect();
+      this.joystick.startX = rect.left + rect.width / 2;
+      this.joystick.startY = rect.top + rect.height / 2;
+      this.handleTouchMove(touch, thumb);
+    };
+
+    const handleTouchMoveEvent = (e) => {
+      e.preventDefault();
+      if (!this.joystick.active) return;
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        if (touch.identifier === this.joystick.touchId) {
+          this.handleTouchMove(touch, thumb);
+          break;
+        }
+      }
+    };
+
+    const handleTouchEndEvent = (e) => {
+      e.preventDefault();
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        if (touch.identifier === this.joystick.touchId) {
+          this.joystick.active = false;
+          this.joystick.touchId = null;
+          this.joystick.inputX = 0;
+          this.joystick.inputY = 0;
+          thumb.style.transform = `translate(0px, 0px)`;
+          break;
+        }
+      }
+    };
+
+    zone.addEventListener('touchstart', handleTouchStart, { passive: false });
+    window.addEventListener('touchmove', handleTouchMoveEvent, { passive: false });
+    window.addEventListener('touchend', handleTouchEndEvent, { passive: false });
+    window.addEventListener('touchcancel', handleTouchEndEvent, { passive: false });
+  }
+
+  handleTouchMove(touch, thumb) {
+    const dx = touch.clientX - this.joystick.startX;
+    const dy = touch.clientY - this.joystick.startY;
+    const dist = Math.hypot(dx, dy);
+    const maxR = this.joystick.maxRadius;
+
+    if (dist === 0) {
+      this.joystick.inputX = 0;
+      this.joystick.inputY = 0;
+      thumb.style.transform = `translate(0px, 0px)`;
+      return;
+    }
+
+    const clampedDist = Math.min(dist, maxR);
+    const angle = Math.atan2(dy, dx);
+    const moveX = Math.cos(angle) * clampedDist;
+    const moveY = Math.sin(angle) * clampedDist;
+
+    thumb.style.transform = `translate(${moveX}px, ${moveY}px)`;
+    this.joystick.inputX = moveX / maxR;
+    this.joystick.inputY = moveY / maxR;
   }
 
   pauseGame() {
@@ -176,8 +275,9 @@ class Game {
     this.survivalTime += dt;
     this.stageTimer += dt;
 
-    // Aktualizace hráče
-    this.player.update(dt, this.keys);
+    // Aktualizace hráče (klávesnice + joystick)
+    const joyVec = { x: this.joystick.inputX, y: this.joystick.inputY };
+    this.player.update(dt, this.keys, joyVec);
 
     // Aktualizace kamery (sleduje hráče do středu)
     this.camera.x = this.player.x - this.canvas.width / 2;

@@ -83,7 +83,7 @@ class Player {
     return true;
   }
 
-  update(dt, keys) {
+  update(dt, keys, joystickInput = { x: 0, y: 0 }) {
     // Regenerace HP
     if (this.hpRegen > 0 && this.hp < this.maxHp) {
       this.hp = Math.min(this.maxHp, this.hp + this.hpRegen * dt);
@@ -93,7 +93,7 @@ class Player {
       this.invulnTimer -= dt;
     }
 
-    // WASD pohyb
+    // WASD / šipky pohyb nebo joystick
     let dx = 0;
     let dy = 0;
     if (keys['KeyW'] || keys['ArrowUp']) dy -= 1;
@@ -101,15 +101,22 @@ class Player {
     if (keys['KeyA'] || keys['ArrowLeft']) dx -= 1;
     if (keys['KeyD'] || keys['ArrowRight']) dx += 1;
 
+    // Pokud je aktivní joystick, zkombinujeme nebo použijeme joystick
+    if (joystickInput.x !== 0 || joystickInput.y !== 0) {
+      dx = joystickInput.x;
+      dy = joystickInput.y;
+    }
+
     this.moving = (dx !== 0 || dy !== 0);
 
     if (this.moving) {
       this.walkAnimTime += dt * 10;
       const len = Math.hypot(dx, dy);
-      dx = (dx / len) * this.speed;
-      dy = (dy / len) * this.speed;
-      this.x += dx * dt * 60;
-      this.y += dy * dt * 60;
+      const normX = dx / len;
+      const normY = dy / len;
+      const moveSpeed = this.speed * Math.min(1, len);
+      this.x += normX * moveSpeed * dt * 60;
+      this.y += normY * moveSpeed * dt * 60;
 
       if (dx > 0) this.facing = 1;
       else if (dx < 0) this.facing = -1;
