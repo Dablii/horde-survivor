@@ -13,13 +13,22 @@ class Game {
     this.keys = {};
     window.addEventListener('keydown', (e) => {
       this.keys[e.code] = true;
+
+      // Klávesa pauzy (Escape nebo P)
+      if (e.code === 'Escape' || e.code === 'KeyP') {
+        if (this.state === 'playing') {
+          this.pauseGame();
+        } else if (this.state === 'paused') {
+          this.resumeGame();
+        }
+      }
     });
     window.addEventListener('keyup', (e) => {
       this.keys[e.code] = false;
     });
 
     // Herní stav
-    this.state = 'start'; // 'start', 'playing', 'levelup', 'stageclear', 'gameover', 'victory'
+    this.state = 'start'; // 'start', 'playing', 'paused', 'levelup', 'stageclear', 'gameover', 'victory'
     this.currentStageIndex = 0;
     this.survivalTime = 0; // v sekundách
     this.stageTimer = 0;
@@ -75,6 +84,26 @@ class Game {
       this.advanceToNextStage();
     });
 
+    // Tlačítko pauzy v HUDu
+    document.getElementById('btn-pause').addEventListener('click', () => {
+      if (this.state === 'playing') {
+        this.pauseGame();
+      } else if (this.state === 'paused') {
+        this.resumeGame();
+      }
+    });
+
+    // Tlačítko pokračovat v pauze
+    document.getElementById('btn-resume').addEventListener('click', () => {
+      this.resumeGame();
+    });
+
+    // Tlačítko restart v pauze
+    document.getElementById('btn-pause-restart').addEventListener('click', () => {
+      document.getElementById('pause-modal').classList.add('hidden');
+      this.restartGame();
+    });
+
     // Zvuk mute/unmute
     const audioBtn = document.getElementById('btn-audio');
     audioBtn.addEventListener('click', () => {
@@ -83,8 +112,22 @@ class Game {
     });
   }
 
+  pauseGame() {
+    if (this.state !== 'playing') return;
+    this.state = 'paused';
+    document.getElementById('pause-modal').classList.remove('hidden');
+  }
+
+  resumeGame() {
+    if (this.state !== 'paused') return;
+    document.getElementById('pause-modal').classList.add('hidden');
+    this.state = 'playing';
+    this.lastTime = performance.now(); // zabránit časovému skoku
+  }
+
   startGame() {
     this.state = 'playing';
+    document.getElementById('pause-modal').classList.add('hidden');
     this.currentStageIndex = 0;
     this.survivalTime = 0;
     this.stageTimer = 0;

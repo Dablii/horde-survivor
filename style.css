@@ -339,6 +339,28 @@ body {
   box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
 }
 
+.pause-card {
+  border-color: #38bdf8;
+  box-shadow: 0 0 35px rgba(56, 189, 248, 0.35);
+  max-width: 520px;
+}
+
+.pause-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.restart-secondary-btn {
+  background: linear-gradient(135deg, #dc2626, #991b1b);
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+}
+
+.restart-secondary-btn:hover {
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.7);
+}
+
 .action-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 22px rgba(99, 102, 241, 0.7);
