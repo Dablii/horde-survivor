@@ -5,9 +5,13 @@ class Game {
     this.canvas = document.getElementById('game-canvas');
     this.ctx = this.canvas.getContext('2d');
 
-    // Velikost okna
+    // Velikost okna a responzivita (včetně rotace mobilu)
     this.resizeCanvas();
     window.addEventListener('resize', () => this.resizeCanvas());
+    window.addEventListener('orientationchange', () => setTimeout(() => this.resizeCanvas(), 100));
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => this.resizeCanvas());
+    }
 
     // Stav kláves (WASD)
     this.keys = {};
