@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Crimson Horde: Survivors</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Press+Start+2P&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="game-container">
+    <!-- Horní ukazatel XP -->
+    <div id="xp-bar-container">
+      <div id="xp-bar-fill"></div>
+      <div id="xp-text">LVL <span id="level-display">1</span> - <span id="xp-ratio">0/10</span> XP</div>
+    </div>
+
+    <!-- HUD Informace -->
+    <header id="hud">
+      <div class="hud-left">
+        <div class="stat-badge hp-badge">
+          <span class="icon">❤️</span>
+          <div class="hp-bar-outer">
+            <div id="hp-bar-fill"></div>
+          </div>
+          <span id="hp-text">100/100</span>
+        </div>
+        <div class="stat-badge">
+          <span class="icon">💀</span> Kills: <span id="kill-count">0</span>
+        </div>
+      </div>
+
+      <div class="hud-center">
+        <div class="stage-badge">
+          Stage: <span id="stage-display">1</span> / <span id="max-stage-display">10</span>
+          <div id="stage-name">Les Nemrtvých</div>
+        </div>
+        <div class="timer-badge">
+          ⏱️ <span id="survival-timer">00:00</span>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <div class="active-buffs" id="active-buffs-list">
+          <!-- Mini ikony získaných vylepšení -->
+        </div>
+        <button id="btn-audio" class="icon-btn" title="Zvuk zap/vyp">🔊</button>
+      </div>
+    </header>
+
+    <!-- Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Výběr buffů při level upu -->
+    <div id="levelup-modal" class="modal hidden">
+      <div class="modal-card">
+        <h2 class="glow-text">🎉 LEVEL UP! 🎉</h2>
+        <p class="subtitle">Vyber si jedno posílení své postavy:</p>
+        <div id="cards-container" class="cards-grid">
+          <!-- 3 karty se dynamicky vloží sem -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Obrazovka mezi stage / Stage Cleared -->
+    <div id="stage-clear-modal" class="modal hidden">
+      <div class="modal-card">
+        <h2 class="glow-gold">🏆 STAGE DOKONČENA! 🏆</h2>
+        <p id="stage-clear-desc">Přežil jsi nápor v této zóně!</p>
+        <div class="reward-preview">
+          <p>Připrav se na těžší monstra v další stage!</p>
+        </div>
+        <button id="btn-next-stage" class="action-btn glow-btn">Vstoupit do další Stage ⚔️</button>
+      </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameover-modal" class="modal hidden">
+      <div class="modal-card death-card">
+        <h1 class="death-title">💀 ZEMŘEL JSI 💀</h1>
+        <div class="death-stats">
+          <div class="death-stat-row">
+            <span>Doba přežití (Survival Time):</span>
+            <strong id="final-survival-time" class="highlight-val">00:00</strong>
+          </div>
+          <div class="death-stat-row">
+            <span>Dosažená Stage:</span>
+            <strong id="final-stage" class="highlight-val">1</strong>
+          </div>
+          <div class="death-stat-row">
+            <span>Dosažená Úroveň (Level):</span>
+            <strong id="final-level" class="highlight-val">1</strong>
+          </div>
+          <div class="death-stat-row">
+            <span>Zabitých nepřátel:</span>
+            <strong id="final-kills" class="highlight-val">0</strong>
+          </div>
+          <div class="death-stat-row">
+            <span>Způsobené zranění (Damage):</span>
+            <strong id="final-damage" class="highlight-val">0</strong>
+          </div>
+        </div>
+        <div class="death-actions">
+          <button id="btn-restart" class="action-btn glow-btn">Zkusit znovu 🔄</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Victory Screen (Pokoření všech 10 stages) -->
+    <div id="victory-modal" class="modal hidden">
+      <div class="modal-card victory-card">
+        <h1 class="glow-gold">👑 ŠAMPION HORDE! 👑</h1>
+        <p>Přežil jsi všech 10 stages a vyčistil temné hordy!</p>
+        <div class="death-stats">
+          <div class="death-stat-row">
+            <span>Celkový čas přežití:</span>
+            <strong id="victory-time" class="highlight-val">00:00</strong>
+          </div>
+          <div class="death-stat-row">
+            <span>Konečný Level:</span>
+            <strong id="victory-level" class="highlight-val">1</strong>
+          </div>
+          <div class="death-stat-row">
+            <span>Zabitých monster:</span>
+            <strong id="victory-kills" class="highlight-val">0</strong>
+          </div>
+        </div>
+        <button id="btn-victory-restart" class="action-btn glow-btn">Hrát novou hru ⚔️</button>
+      </div>
+    </div>
+
+    <!-- Startovací úvodní okno -->
+    <div id="start-modal" class="modal">
+      <div class="modal-card">
+        <h1 class="game-logo">⚔️ CRIMSON HORDE ⚔️</h1>
+        <p class="flavor-text">Horde Survivor inspirovaný Vampire Survivors</p>
+        <div class="instructions-box">
+          <p><strong>Ovládání:</strong> Pouze <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> (nebo šipky)</p>
+          <p><strong>Střelba:</strong> ⚡ Automatická (střílí na nejbližší nepřátele)</p>
+          <p><strong>Cíl:</strong> Sbírej drahokamy zkušeností (<span style="color:#00e5ff">💎 XP</span>), získávej mocné buffy při level-upu a přežij všech <strong>10 stages</strong>!</p>
+        </div>
+        <button id="btn-start" class="action-btn glow-btn start-btn">Začít lov 🩸</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio synthesizér a herní skripty -->
+  <script src="audio.js"></script>
+  <script src="buffs.js"></script>
+  <script src="stages.js"></script>
+  <script src="particles.js"></script>
+  <script src="entities.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
