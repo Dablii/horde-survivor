@@ -66,11 +66,12 @@ class DamageNumber {
 
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.font = this.isCrit ? 'bold 20px Rajdhani' : 'bold 15px Rajdhani';
+    ctx.font = this.isCrit ? 'bold 22px "Rajdhani", Arial, sans-serif' : 'bold 16px "Rajdhani", Arial, sans-serif';
     ctx.fillStyle = this.color;
-    ctx.shadowColor = '#000';
-    ctx.shadowBlur = 4;
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 3;
     ctx.textAlign = 'center';
+    ctx.strokeText(this.text, screenX, screenY);
     ctx.fillText(this.text, screenX, screenY);
     ctx.restore();
   }

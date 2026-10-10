@@ -1208,7 +1208,7 @@ class GoldCoin {
     return false;
   }
 
-  // 3D iluze točící se královské zlaté mince
+  // 3D iluze točící se královské zlaté mince - sjednocený vizuál s UI mincí
   draw(ctx, camera) {
     const screenX = this.x - camera.x;
     const screenY = this.y - camera.y;
@@ -1216,31 +1216,49 @@ class GoldCoin {
     ctx.save();
     ctx.translate(screenX, screenY);
 
-    ctx.shadowColor = '#f59e0b';
-    ctx.shadowBlur = 10;
-    ctx.fillStyle = '#fbbf24';
+    ctx.shadowColor = '#D4AF37';
+    ctx.shadowBlur = 8;
 
     // Šířka měnící se s rotací mince
     const scaleX = Math.abs(Math.cos(this.angle)) * 0.8 + 0.2;
     ctx.scale(scaleX, 1);
 
+    // 1. Zlaté tělo mince (přechod)
+    const grad = ctx.createLinearGradient(0, -this.radius, 0, this.radius);
+    grad.addColorStop(0, '#FFF1B0');
+    grad.addColorStop(0.5, '#D4AF37');
+    grad.addColorStop(1, '#8A6A14');
+    ctx.fillStyle = grad;
+
     ctx.beginPath();
     ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Vroubkovaný okraj mince
-    ctx.strokeStyle = '#b45309';
-    ctx.lineWidth = 1.5;
+    // 2. Vnější tmavý obvod
+    ctx.strokeStyle = '#4A3408';
+    ctx.lineWidth = 1.3;
     ctx.stroke();
 
-    // Vyražený heraldický kříž
-    ctx.strokeStyle = '#78350f';
-    ctx.lineWidth = 1.2;
+    // 3. Vnitřní vyrytý prstenec
     ctx.beginPath();
-    ctx.moveTo(0, -this.radius * 0.5);
-    ctx.lineTo(0, this.radius * 0.5);
-    ctx.moveTo(-this.radius * 0.5, 0);
-    ctx.lineTo(this.radius * 0.5, 0);
+    ctx.arc(0, 0, this.radius * 0.7, 0, Math.PI * 2);
+    ctx.strokeStyle = '#8A6A14';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+
+    // 4. Středový kosočtvercový znak (pergamen/zlato)
+    const dH = this.radius * 0.55;
+    const dW = this.radius * 0.4;
+    ctx.beginPath();
+    ctx.moveTo(0, -dH);
+    ctx.lineTo(dW, 0);
+    ctx.lineTo(0, dH);
+    ctx.lineTo(-dW, 0);
+    ctx.closePath();
+    ctx.fillStyle = '#F1E4C3';
+    ctx.fill();
+    ctx.strokeStyle = '#8A6A14';
+    ctx.lineWidth = 0.7;
     ctx.stroke();
 
     ctx.restore();

@@ -43,8 +43,8 @@ const BUFF_DEFINITIONS = [
   {
     id: 'multishot',
     name: 'Rozptyl Střel',
-    iconKey: 'bow',
-    get icon() { return window.getSvg ? window.getSvg('bow') : ''; },
+    iconKey: 'multishot',
+    get icon() { return window.getSvg ? window.getSvg('multishot') : ''; },
     tier: 'Projektily',
     rarity: 'epic',
     description: 'Přidává +1 dodatečný projektil k hlavní salvě.',
@@ -83,8 +83,8 @@ const BUFF_DEFINITIONS = [
   {
     id: 'pierce',
     name: 'Průrazné Střely',
-    iconKey: 'sword',
-    get icon() { return window.getSvg ? window.getSvg('sword') : ''; },
+    iconKey: 'pierce',
+    get icon() { return window.getSvg ? window.getSvg('pierce') : ''; },
     tier: 'Penetrace',
     rarity: 'rare',
     description: 'Projektily proletí skrze +1 dalšího nepřítele.',
