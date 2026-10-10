@@ -26,6 +26,9 @@ class Player {
     this.hasSplash = false;
     this.splashRadius = 0;
 
+    // Meta-progrese bonusy
+    this.xpMult = 1.0;
+
     // Orbiting blades
     this.hasOrbitals = false;
     this.orbitalsCount = 0;
@@ -271,6 +274,47 @@ class Projectile {
   }
 }
 
+class EnemyProjectile {
+  constructor(x, y, vx, vy, damage = 15, radius = 7, color = '#ef4444') {
+    this.x = x;
+    this.y = y;
+    this.vx = vx;
+    this.vy = vy;
+    this.damage = damage;
+    this.radius = radius;
+    this.color = color;
+    this.life = 3.5; // sekundy trvání
+  }
+
+  update(dt) {
+    this.x += this.vx * dt * 60;
+    this.y += this.vy * dt * 60;
+    this.life -= dt;
+    return this.life > 0;
+  }
+
+  draw(ctx, camera) {
+    const screenX = this.x - camera.x;
+    const screenY = this.y - camera.y;
+
+    ctx.save();
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = this.color;
+
+    ctx.beginPath();
+    ctx.arc(screenX, screenY, this.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Horké jádro
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(screenX, screenY, this.radius * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
 class Enemy {
   constructor(x, y, type, stageNumber = 1) {
     this.x = x;
@@ -342,7 +386,12 @@ class Enemy {
         this.speed = 2.6;
         this.damage = 14;
         this.color = '#38bdf8';
-        this.xpValue = 3;
+        this.xpValue = 5;
+        this.isShooter = true;
+        this.shootCooldown = 2.5 + Math.random() * 1.5;
+        this.telegraphTimer = 0;
+        this.telegraphDuration = 0.75;
+        this.telegraphTarget = null;
         break;
       case 'ice_wraith':
         this.name = 'Ledový Běs';
@@ -351,7 +400,12 @@ class Enemy {
         this.speed = 2.4;
         this.damage = 18;
         this.color = '#0284c7';
-        this.xpValue = 4.5;
+        this.xpValue = 7;
+        this.isShooter = true;
+        this.shootCooldown = 2.2 + Math.random() * 1.5;
+        this.telegraphTimer = 0;
+        this.telegraphDuration = 0.8;
+        this.telegraphTarget = null;
         break;
       case 'hell_hound':
         this.name = 'Pekelný Pes';
@@ -360,7 +414,7 @@ class Enemy {
         this.speed = 3.4;
         this.damage = 22;
         this.color = '#ef4444';
-        this.xpValue = 5;
+        this.xpValue = 8;
         break;
       default:
         this.name = 'Nestvůra';
@@ -369,7 +423,7 @@ class Enemy {
         this.speed = 1.8;
         this.damage = 12;
         this.color = '#94a3b8';
-        this.xpValue = 2;
+        this.xpValue = 3;
         break;
     }
   }
@@ -383,7 +437,7 @@ class Enemy {
     return this.hp <= 0;
   }
 
-  update(dt, player) {
+  update(dt, player, spawnEnemyProjectile = null) {
     this.animTime += dt * 6;
     if (this.hitFlash > 0) this.hitFlash -= dt;
 
@@ -392,15 +446,74 @@ class Enemy {
     const dy = player.y - this.y;
     const dist = Math.hypot(dx, dy);
 
+    // Pokud střelec telegrafuje útok, zpomalí se a míří
+    if (this.isShooter) {
+      if (this.telegraphTimer > 0) {
+        this.telegraphTimer -= dt;
+        // Během telegrafování stojí nebo se pohybuje velmi pomalu
+        if (this.telegraphTimer <= 0 && spawnEnemyProjectile && this.telegraphTarget) {
+          // Vypustit střelu směrem k cíli
+          const aimDx = this.telegraphTarget.x - this.x;
+          const aimDy = this.telegraphTarget.y - this.y;
+          const aimDist = Math.hypot(aimDx, aimDy) || 1;
+          const projSpeed = 6.5;
+          const vx = (aimDx / aimDist) * projSpeed;
+          const vy = (aimDy / aimDist) * projSpeed;
+          const projDmg = Math.round(this.damage * 0.85);
+
+          spawnEnemyProjectile(new EnemyProjectile(this.x, this.y, vx, vy, projDmg, 7, this.color));
+          if (window.sound && window.sound.enemyShoot) window.sound.enemyShoot();
+          this.telegraphTarget = null;
+        }
+      } else {
+        this.shootCooldown -= dt;
+        if (this.shootCooldown <= 0 && dist < 420) {
+          // Zahájit telegrafovaný útok
+          this.shootCooldown = 3.0 + Math.random() * 1.5;
+          this.telegraphTimer = this.telegraphDuration;
+          this.telegraphTarget = { x: player.x, y: player.y };
+        }
+      }
+    }
+
+    const moveMult = (this.telegraphTimer > 0) ? 0.25 : 1.0;
     if (dist > 2) {
-      this.x += (dx / dist) * this.speed * dt * 60;
-      this.y += (dy / dist) * this.speed * dt * 60;
+      this.x += (dx / dist) * this.speed * moveMult * dt * 60;
+      this.y += (dy / dist) * this.speed * moveMult * dt * 60;
     }
   }
 
   draw(ctx, camera) {
     const screenX = this.x - camera.x;
     const screenY = this.y - camera.y;
+
+    // 1. Vykreslení telegrafované červené zóny (indikátor zásahu)
+    if (this.telegraphTimer > 0 && this.telegraphTarget) {
+      const targetScreenX = this.telegraphTarget.x - camera.x;
+      const targetScreenY = this.telegraphTarget.y - camera.y;
+      const progress = 1 - (this.telegraphTimer / this.telegraphDuration);
+
+      ctx.save();
+      // Telegrafovaná linie k cíli
+      ctx.strokeStyle = `rgba(239, 68, 68, ${0.3 + progress * 0.5})`;
+      ctx.lineWidth = 2 + progress * 2;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.moveTo(screenX, screenY);
+      ctx.lineTo(targetScreenX, targetScreenY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Červená cílová zóna
+      ctx.fillStyle = `rgba(239, 68, 68, ${0.15 + progress * 0.25})`;
+      ctx.strokeStyle = `rgba(239, 68, 68, ${0.6 + progress * 0.4})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(targetScreenX, targetScreenY, 22 * (0.6 + progress * 0.4), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
 
     ctx.save();
     ctx.translate(screenX, screenY);
@@ -459,7 +572,15 @@ class BossEnemy extends Enemy {
     this.speed = 1.6 + Math.min(1.2, stageNumber * 0.1);
     this.damage = 25 + stageNumber * 5;
     this.color = '#dc2626';
-    this.xpValue = 50 + stageNumber * 20;
+    this.xpValue = 60 + stageNumber * 25;
+
+    // Boss útoky a telegrafování
+    this.attackCooldown = 3.5;
+    this.telegraphTimer = 0;
+    this.telegraphDuration = 1.1; // 1.1s varovná červená zóna
+    this.attackMode = 'aimed_spread'; // 'aimed_spread' nebo 'ring'
+    this.telegraphTarget = null;
+    this.ringRadius = 140;
 
     this.setupBossData();
   }
@@ -480,9 +601,115 @@ class BossEnemy extends Enemy {
     this.name = names[this.bossKey] || 'Arcidémon';
   }
 
+  update(dt, player, spawnEnemyProjectile = null) {
+    this.animTime += dt * 6;
+    if (this.hitFlash > 0) this.hitFlash -= dt;
+
+    const dx = player.x - this.x;
+    const dy = player.y - this.y;
+    const dist = Math.hypot(dx, dy);
+
+    // Telegrafování a útoky bosse
+    if (this.telegraphTimer > 0) {
+      this.telegraphTimer -= dt;
+
+      if (this.telegraphTimer <= 0 && spawnEnemyProjectile) {
+        // Provést výstřel projektilů
+        if (this.attackMode === 'aimed_spread' && this.telegraphTarget) {
+          const aimAngle = Math.atan2(this.telegraphTarget.y - this.y, this.telegraphTarget.x - this.x);
+          const shots = 5;
+          const spread = 0.35;
+          const projSpeed = 6.2;
+          const projDmg = Math.round(this.damage * 0.85);
+
+          for (let i = 0; i < shots; i++) {
+            const angle = aimAngle + (i - (shots - 1) / 2) * spread;
+            const vx = Math.cos(angle) * projSpeed;
+            const vy = Math.sin(angle) * projSpeed;
+            spawnEnemyProjectile(new EnemyProjectile(this.x, this.y, vx, vy, projDmg, 9, '#ef4444'));
+          }
+          if (window.sound && window.sound.enemyShoot) window.sound.enemyShoot();
+        } else if (this.attackMode === 'ring') {
+          const count = 10;
+          const projSpeed = 5.0;
+          const projDmg = Math.round(this.damage * 0.75);
+
+          for (let i = 0; i < count; i++) {
+            const angle = (i * Math.PI * 2) / count;
+            const vx = Math.cos(angle) * projSpeed;
+            const vy = Math.sin(angle) * projSpeed;
+            spawnEnemyProjectile(new EnemyProjectile(this.x, this.y, vx, vy, projDmg, 8, '#f97316'));
+          }
+          if (window.sound && window.sound.enemyShoot) window.sound.enemyShoot();
+        }
+        this.telegraphTarget = null;
+      }
+    } else {
+      this.attackCooldown -= dt;
+      if (this.attackCooldown <= 0) {
+        this.attackCooldown = 3.8 + Math.random() * 1.5;
+        this.telegraphTimer = this.telegraphDuration;
+        this.attackMode = Math.random() < 0.6 ? 'aimed_spread' : 'ring';
+        this.telegraphTarget = { x: player.x, y: player.y };
+      }
+    }
+
+    // Bossové se pohybují pomaleji během nabíjení útoku
+    const moveMult = (this.telegraphTimer > 0) ? 0.3 : 1.0;
+    if (dist > 2) {
+      this.x += (dx / dist) * this.speed * moveMult * dt * 60;
+      this.y += (dy / dist) * this.speed * moveMult * dt * 60;
+    }
+  }
+
   draw(ctx, camera) {
     const screenX = this.x - camera.x;
     const screenY = this.y - camera.y;
+
+    // Telegrafované červené zóny bosse
+    if (this.telegraphTimer > 0) {
+      const progress = 1 - (this.telegraphTimer / this.telegraphDuration);
+
+      ctx.save();
+      if (this.attackMode === 'aimed_spread' && this.telegraphTarget) {
+        const targetScreenX = this.telegraphTarget.x - camera.x;
+        const targetScreenY = this.telegraphTarget.y - camera.y;
+        const aimAngle = Math.atan2(this.telegraphTarget.y - this.y, this.telegraphTarget.x - this.x);
+
+        // Vykreslit kužel/vějíř nebezpečné červené zóny
+        ctx.fillStyle = `rgba(239, 68, 68, ${0.15 + progress * 0.3})`;
+        ctx.strokeStyle = `rgba(239, 68, 68, ${0.5 + progress * 0.5})`;
+        ctx.lineWidth = 2.5;
+
+        ctx.beginPath();
+        ctx.moveTo(screenX, screenY);
+        const arcSpread = 0.45;
+        const beamLen = 320;
+        ctx.arc(screenX, screenY, beamLen, aimAngle - arcSpread, aimAngle + arcSpread);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Zaměřovač na hráče
+        ctx.fillStyle = `rgba(220, 38, 38, ${0.4 + progress * 0.4})`;
+        ctx.beginPath();
+        ctx.arc(targetScreenX, targetScreenY, 28 * (0.6 + progress * 0.4), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else if (this.attackMode === 'ring') {
+        // Rozpínající se červený kruh okolo bosse
+        const ringR = 160 * progress;
+        ctx.fillStyle = `rgba(249, 115, 22, ${0.1 + progress * 0.25})`;
+        ctx.strokeStyle = `rgba(239, 68, 68, ${0.6 + progress * 0.4})`;
+        ctx.lineWidth = 3;
+
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, ringR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
 
     ctx.save();
     ctx.translate(screenX, screenY);
@@ -567,7 +794,8 @@ class XPGem {
 
     // Sebrání
     if (dist <= player.radius + this.radius) {
-      player.xp += this.value;
+      const earnedXP = this.value * (player.xpMult || 1.0);
+      player.xp += earnedXP;
       window.sound.pickupXP();
       window.particleSystem.spawnXPGemSparkle(this.x, this.y);
       return true; // Sebráno
@@ -598,8 +826,78 @@ class XPGem {
   }
 }
 
+class GoldCoin {
+  constructor(x, y, value = 1) {
+    this.x = x;
+    this.y = y;
+    this.value = value;
+    this.radius = 7;
+    this.color = '#fbbf24';
+    this.sparkleTimer = Math.random();
+    this.angle = 0;
+  }
+
+  update(dt, player) {
+    this.sparkleTimer += dt;
+    this.angle += dt * 4;
+    const dx = player.x - this.x;
+    const dy = player.y - this.y;
+    const dist = Math.hypot(dx, dy);
+
+    // Magnetizace
+    if (dist <= player.magnetRange) {
+      const speed = Math.max(5, 420 / (dist + 10));
+      this.x += (dx / dist) * speed * dt * 60;
+      this.y += (dy / dist) * speed * dt * 60;
+    }
+
+    // Sebrání
+    if (dist <= player.radius + this.radius) {
+      if (window.game) {
+        window.game.addGold(this.value);
+      }
+      window.sound.pickupCoin();
+      window.particleSystem.spawnExplosion(this.x, this.y, '#f59e0b', 8);
+      return true; // Sebráno
+    }
+    return false;
+  }
+
+  draw(ctx, camera) {
+    const screenX = this.x - camera.x;
+    const screenY = this.y - camera.y;
+
+    ctx.save();
+    ctx.translate(screenX, screenY);
+
+    // Zlatá záře
+    ctx.shadowColor = '#f59e0b';
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Vnitřní lem mince
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Znak $ / mince uvnitř
+    ctx.fillStyle = '#78350f';
+    ctx.font = 'bold 9px Rajdhani';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('$', 0, 0);
+
+    ctx.restore();
+  }
+}
+
 window.Player = Player;
 window.Projectile = Projectile;
+window.EnemyProjectile = EnemyProjectile;
 window.Enemy = Enemy;
 window.BossEnemy = BossEnemy;
 window.XPGem = XPGem;
+window.GoldCoin = GoldCoin;

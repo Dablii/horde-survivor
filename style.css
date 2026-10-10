@@ -656,3 +656,199 @@ kbd {
   }
 }
 
+/* =========================================
+   Nové styly pro Zlato, Lifetime statistiky & Obchod
+   ========================================= */
+
+.gold-badge {
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #fbbf24;
+  text-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.start-card {
+  max-width: 860px;
+}
+
+.stats-overview-box {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
+}
+
+.stats-header {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fde047;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+  gap: 10px;
+}
+
+.stat-card {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.stat-icon {
+  font-size: 24px;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.2;
+}
+
+.stat-value {
+  font-size: 16px;
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.start-actions-row {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.shop-btn {
+  font-size: 22px;
+  padding: 16px 36px;
+  background: linear-gradient(135deg, #d97706, #b45309);
+  box-shadow: 0 4px 20px rgba(217, 119, 6, 0.45);
+}
+
+.shop-btn:hover {
+  box-shadow: 0 6px 28px rgba(217, 119, 6, 0.75);
+}
+
+/* Obchod Modal */
+.shop-card {
+  max-width: 900px;
+  border-color: #f59e0b;
+  box-shadow: 0 0 40px rgba(245, 158, 11, 0.35);
+}
+
+.shop-gold-display {
+  background: rgba(20, 15, 35, 0.85);
+  border: 1px solid #f59e0b;
+  border-radius: 10px;
+  padding: 10px 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+  max-height: 52vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.shop-item-card {
+  background: linear-gradient(180deg, #1e1b4b, #0f172a);
+  border: 2px solid #6366f1;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+.shop-item-card.maxed {
+  border-color: #10b981;
+  opacity: 0.85;
+}
+
+.shop-item-icon {
+  font-size: 38px;
+  margin-bottom: 8px;
+}
+
+.shop-item-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.shop-item-desc {
+  font-size: 13px;
+  color: #94a3b8;
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+
+.shop-item-level {
+  font-size: 12px;
+  color: #a5b4fc;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.shop-buy-btn {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border: none;
+  color: #fff;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.4);
+  width: 100%;
+}
+
+.shop-buy-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.7);
+}
+
+.shop-buy-btn:disabled {
+  background: #334155;
+  color: #64748b;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.shop-actions {
+  display: flex;
+  justify-content: center;
+}
+

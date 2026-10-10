@@ -32,18 +32,38 @@ class Game {
     });
 
     // Herní stav
-    this.state = 'start'; // 'start', 'playing', 'paused', 'levelup', 'stageclear', 'gameover', 'victory'
+    this.state = 'start'; // 'start', 'playing', 'paused', 'levelup', 'stageclear', 'gameover', 'victory', 'shop'
     this.currentStageIndex = 0;
     this.survivalTime = 0; // v sekundách
     this.stageTimer = 0;
     this.totalKills = 0;
     this.totalDamageDealt = 0;
+    this.runGold = 0; // Zlato získané v aktuálním runu
+
+    // Meta-progrese a lifetime statistiky
+    this.gold = 0; // Celkové uložené zlato
+    this.lifetimeStats = {
+      bestSurvivalTime: 0,
+      highestStage: 1,
+      highestLevel: 1,
+      totalKills: 0
+    };
+    this.metaUpgrades = {
+      maxHp: 0,
+      movespeed: 0,
+      damage: 0,
+      xpMultiplier: 0,
+      range: 0
+    };
+    this.loadPersistentData();
 
     // Entity
     this.player = new Player(0, 0);
     this.projectiles = [];
+    this.enemyProjectiles = []; // Telegrafované a vystřelené projektily nepřátel
     this.enemies = [];
     this.xpGems = [];
+    this.goldCoins = []; // Vypadlé mince z monster
     this.bossSpawnedForCurrentStage = false;
 
     // Kamera
@@ -67,6 +87,7 @@ class Game {
     // UI reference
     this.setupUI();
     this.setupJoystick();
+    this.updateStatsUI();
   }
 
   resizeCanvas() {
@@ -126,6 +147,41 @@ class Game {
       const isMuted = window.sound.toggleMute();
       audioBtn.textContent = isMuted ? '🔇' : '🔊';
     });
+
+    // Otevření obchodu ze startovacího menu
+    const openShopBtn = document.getElementById('btn-open-shop');
+    if (openShopBtn) {
+      openShopBtn.addEventListener('click', () => {
+        window.sound.init();
+        this.openShopModal();
+      });
+    }
+
+    // Zavření obchodu
+    const closeShopBtn = document.getElementById('btn-close-shop');
+    if (closeShopBtn) {
+      closeShopBtn.addEventListener('click', () => {
+        this.closeShopModal();
+      });
+    }
+
+    // Otevření obchodu z Game Over
+    const goShopBtn = document.getElementById('btn-gameover-shop');
+    if (goShopBtn) {
+      goShopBtn.addEventListener('click', () => {
+        document.getElementById('gameover-modal').classList.add('hidden');
+        this.openShopModal();
+      });
+    }
+
+    // Otevření obchodu z Victory
+    const vicShopBtn = document.getElementById('btn-victory-shop');
+    if (vicShopBtn) {
+      vicShopBtn.addEventListener('click', () => {
+        document.getElementById('victory-modal').classList.add('hidden');
+        this.openShopModal();
+      });
+    }
   }
 
   setupJoystick() {
@@ -231,16 +287,23 @@ class Game {
   startGame() {
     this.state = 'playing';
     document.getElementById('pause-modal').classList.add('hidden');
+    document.getElementById('start-modal').classList.add('hidden');
+    document.getElementById('shop-modal').classList.add('hidden');
     this.currentStageIndex = 0;
     this.survivalTime = 0;
     this.stageTimer = 0;
     this.totalKills = 0;
     this.totalDamageDealt = 0;
+    this.runGold = 0;
 
     this.player = new Player(0, 0);
+    this.applyMetaUpgradesToPlayer();
+
     this.projectiles = [];
+    this.enemyProjectiles = [];
     this.enemies = [];
     this.xpGems = [];
+    this.goldCoins = [];
     window.particleSystem.reset();
     window.buffManager.reset();
 
@@ -346,9 +409,31 @@ class Game {
       return true;
     });
 
-    // Aktualizace nepřátel a kolize s hráčem
+    // Aktualizace nepřátelských projektilů a kolize s hráčem
+    this.enemyProjectiles = this.enemyProjectiles.filter((ep) => {
+      const alive = ep.update(dt);
+      if (!alive) return false;
+
+      // Kolize nepřátelského projektilu s hráčem
+      const dist = Math.hypot(ep.x - this.player.x, ep.y - this.player.y);
+      if (dist <= ep.radius + this.player.radius) {
+        if (this.player.takeDamage(ep.damage)) {
+          if (this.player.hp <= 0) {
+            this.triggerGameOver();
+          }
+        }
+        return false; // Projektil zanikne po zásahu
+      }
+      return true;
+    });
+
+    // Aktualizace nepřátel a kolize s hráčem (včetně spawnování střel z telegrafovaných útoků)
+    const spawnEnemyProj = (proj) => {
+      this.enemyProjectiles.push(proj);
+    };
+
     this.enemies.forEach((enemy) => {
-      enemy.update(dt, this.player);
+      enemy.update(dt, this.player, spawnEnemyProj);
 
       // Poškození hráče kontaktem
       const dist = Math.hypot(this.player.x - enemy.x, this.player.y - enemy.y);
@@ -370,6 +455,12 @@ class Game {
       if (collected) {
         this.checkLevelUp();
       }
+      return !collected;
+    });
+
+    // Mince (Gold drops)
+    this.goldCoins = this.goldCoins.filter((coin) => {
+      const collected = coin.update(dt, this.player);
       return !collected;
     });
 
@@ -555,6 +646,19 @@ class Game {
     // Vytvoření XP drahokamu
     this.xpGems.push(new XPGem(enemy.x, enemy.y, enemy.xpValue));
 
+    // Drop Zlata (Gold drop): Bossové mají 100% jistotu více mincí, běžná monstra 30% šanci
+    if (enemy.isBoss) {
+      const coinCount = 3 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < coinCount; i++) {
+        const ox = enemy.x + (Math.random() * 40 - 20);
+        const oy = enemy.y + (Math.random() * 40 - 20);
+        this.goldCoins.push(new GoldCoin(ox, oy, 5 + this.currentStageConfig.stage));
+      }
+    } else if (Math.random() < 0.32) {
+      const coinValue = enemy.isShooter ? 2 : 1;
+      this.goldCoins.push(new GoldCoin(enemy.x, enemy.y, coinValue));
+    }
+
     // Pokud byl zabit finální boss 10. stage
     if (enemy.isBoss && this.currentStageConfig.stage === 10) {
       this.triggerVictory();
@@ -565,12 +669,20 @@ class Game {
     while (this.player.xp >= this.player.xpToNextLevel) {
       this.player.xp -= this.player.xpToNextLevel;
       this.player.level++;
-      // XP křivka pro další level
-      this.player.xpToNextLevel = Math.round(this.player.xpToNextLevel * 1.35 + 5);
+
+      // Rebalancovaná XP křivka: dynamický a svižný postup i v late-game
+      // Místo strmého x1.35 exponenciálu používáme mírnější koeficient pro vyšší levely
+      if (this.player.level < 10) {
+        this.player.xpToNextLevel = Math.round(this.player.xpToNextLevel * 1.20 + 4);
+      } else if (this.player.level < 25) {
+        this.player.xpToNextLevel = Math.round(this.player.xpToNextLevel * 1.14 + 6);
+      } else {
+        this.player.xpToNextLevel = Math.round(this.player.xpToNextLevel * 1.08 + 10);
+      }
 
       window.sound.levelUp();
       this.openLevelUpModal();
-      break; // Zobrazí modal pro 1 level, po výběru se eventuálně vyhodnotí další
+      break; // Zobrazí modal pro 1 level, po výběru se vyhodnotí další
     }
   }
 
@@ -651,11 +763,15 @@ class Game {
     this.state = 'gameover';
     window.sound.gameOver();
 
+    // Uložit lifetime statistiky
+    this.recordRunStatistics();
+
     const modal = document.getElementById('gameover-modal');
     document.getElementById('final-survival-time').textContent = this.formatTime(this.survivalTime);
     document.getElementById('final-stage').textContent = `${this.currentStageConfig.stage} (${this.currentStageConfig.name})`;
     document.getElementById('final-level').textContent = this.player.level;
     document.getElementById('final-kills').textContent = this.totalKills;
+    document.getElementById('final-run-gold').textContent = `${this.runGold} 🪙`;
     document.getElementById('final-damage').textContent = this.totalDamageDealt;
 
     modal.classList.remove('hidden');
@@ -665,10 +781,14 @@ class Game {
     this.state = 'victory';
     window.sound.stageClear();
 
+    // Uložit lifetime statistiky
+    this.recordRunStatistics();
+
     const modal = document.getElementById('victory-modal');
     document.getElementById('victory-time').textContent = this.formatTime(this.survivalTime);
     document.getElementById('victory-level').textContent = this.player.level;
     document.getElementById('victory-kills').textContent = this.totalKills;
+    document.getElementById('victory-run-gold').textContent = `${this.runGold} 🪙`;
 
     modal.classList.remove('hidden');
   }
@@ -691,8 +811,9 @@ class Game {
     document.getElementById('hp-bar-fill').style.width = `${hpPercent}%`;
     document.getElementById('hp-text').textContent = `${Math.ceil(this.player.hp)}/${this.player.maxHp}`;
 
-    // Kills & Time
+    // Kills & Time & Gold
     document.getElementById('kill-count').textContent = this.totalKills;
+    document.getElementById('hud-gold-count').textContent = this.gold;
     document.getElementById('survival-timer').textContent = this.formatTime(this.survivalTime);
 
     // Stage
@@ -742,19 +863,25 @@ class Game {
     }
     ctx.stroke();
 
-    // 2. XP Krystaly
+    // 2. XP Krystaly a Mince (Gold Drops)
     for (let i = 0; i < this.xpGems.length; i++) {
       this.xpGems[i].draw(ctx, this.camera);
     }
+    for (let i = 0; i < this.goldCoins.length; i++) {
+      this.goldCoins[i].draw(ctx, this.camera);
+    }
 
-    // 3. Nepřátelé
+    // 3. Nepřátelé (včetně telegrafovaných červených zón pod nimi/kolem nich)
     for (let i = 0; i < this.enemies.length; i++) {
       this.enemies[i].draw(ctx, this.camera);
     }
 
-    // 4. Projektily
+    // 4. Projektily hráče a nepřátelské projektily
     for (let i = 0; i < this.projectiles.length; i++) {
       this.projectiles[i].draw(ctx, this.camera);
+    }
+    for (let i = 0; i < this.enemyProjectiles.length; i++) {
+      this.enemyProjectiles[i].draw(ctx, this.camera);
     }
 
     // 5. Hráč
@@ -762,6 +889,226 @@ class Game {
 
     // 6. Částice a čísla poškození
     window.particleSystem.draw(ctx, this.camera);
+  }
+
+  // ==========================================
+  // Meta-progrese & Obchod & Lifetime Statistiky
+  // ==========================================
+
+  loadPersistentData() {
+    try {
+      const savedGold = localStorage.getItem('crimson_horde_gold');
+      if (savedGold !== null) {
+        this.gold = Math.max(0, parseInt(savedGold, 10) || 0);
+      }
+
+      const savedStats = localStorage.getItem('crimson_horde_lifetime_stats');
+      if (savedStats) {
+        this.lifetimeStats = Object.assign(this.lifetimeStats, JSON.parse(savedStats));
+      }
+
+      const savedUpgrades = localStorage.getItem('crimson_horde_meta_upgrades');
+      if (savedUpgrades) {
+        this.metaUpgrades = Object.assign(this.metaUpgrades, JSON.parse(savedUpgrades));
+      }
+    } catch (e) {
+      console.warn('Nepodařilo se načíst data z localStorage:', e);
+    }
+  }
+
+  savePersistentData() {
+    try {
+      localStorage.setItem('crimson_horde_gold', this.gold.toString());
+      localStorage.setItem('crimson_horde_lifetime_stats', JSON.stringify(this.lifetimeStats));
+      localStorage.setItem('crimson_horde_meta_upgrades', JSON.stringify(this.metaUpgrades));
+    } catch (e) {
+      console.warn('Nepodařilo se uložit data do localStorage:', e);
+    }
+  }
+
+  addGold(amount) {
+    this.runGold += amount;
+    this.gold += amount;
+    this.savePersistentData();
+    this.updateHUD();
+    this.updateStatsUI();
+  }
+
+  applyMetaUpgradesToPlayer() {
+    // 1. Max HP (+15 HP za úroveň)
+    const hpLvl = this.metaUpgrades.maxHp || 0;
+    this.player.maxHp += hpLvl * 15;
+    this.player.hp = this.player.maxHp;
+
+    // 2. Movement Speed (+6% za úroveň)
+    const speedLvl = this.metaUpgrades.movespeed || 0;
+    this.player.speedMult += speedLvl * 0.06;
+
+    // 3. Damage (+10% za úroveň)
+    const dmgLvl = this.metaUpgrades.damage || 0;
+    this.player.damageMult += dmgLvl * 0.10;
+
+    // 4. XP Multiplier (+12% za úroveň)
+    const xpLvl = this.metaUpgrades.xpMultiplier || 0;
+    this.player.xpMult = 1.0 + xpLvl * 0.12;
+
+    // 5. Attack Range (+8% za úroveň)
+    const rangeLvl = this.metaUpgrades.range || 0;
+    this.player.rangeMult += rangeLvl * 0.08;
+  }
+
+  recordRunStatistics() {
+    let updated = false;
+
+    // Nejlepší přežitý čas
+    if (this.survivalTime > (this.lifetimeStats.bestSurvivalTime || 0)) {
+      this.lifetimeStats.bestSurvivalTime = Math.floor(this.survivalTime);
+      updated = true;
+    }
+
+    // Nejvyšší stage
+    const currentStage = this.currentStageConfig.stage;
+    if (currentStage > (this.lifetimeStats.highestStage || 1)) {
+      this.lifetimeStats.highestStage = currentStage;
+      updated = true;
+    }
+
+    // Nejvyšší level
+    if (this.player.level > (this.lifetimeStats.highestLevel || 1)) {
+      this.lifetimeStats.highestLevel = this.player.level;
+      updated = true;
+    }
+
+    // Celkový počet zabitých nepřátel
+    this.lifetimeStats.totalKills = (this.lifetimeStats.totalKills || 0) + this.totalKills;
+    updated = true;
+
+    this.savePersistentData();
+    this.updateStatsUI();
+  }
+
+  updateStatsUI() {
+    const bestTimeEl = document.getElementById('stats-best-time');
+    const maxStageEl = document.getElementById('stats-max-stage');
+    const maxLevelEl = document.getElementById('stats-max-level');
+    const totalKillsEl = document.getElementById('stats-total-kills');
+    const goldAmountEl = document.getElementById('stats-gold-amount');
+    const shopGoldAmountEl = document.getElementById('shop-gold-amount');
+
+    if (bestTimeEl) bestTimeEl.textContent = this.formatTime(this.lifetimeStats.bestSurvivalTime || 0);
+    if (maxStageEl) maxStageEl.textContent = `Stage ${this.lifetimeStats.highestStage || 1}`;
+    if (maxLevelEl) maxLevelEl.textContent = `Lvl ${this.lifetimeStats.highestLevel || 1}`;
+    if (totalKillsEl) totalKillsEl.textContent = this.lifetimeStats.totalKills || 0;
+    if (goldAmountEl) goldAmountEl.textContent = this.gold;
+    if (shopGoldAmountEl) shopGoldAmountEl.textContent = this.gold;
+  }
+
+  // Definice permanentních vylepšení v obchodě
+  getShopDefinitions() {
+    return [
+      {
+        id: 'maxHp',
+        name: 'Dračí Vitalita',
+        icon: '❤️',
+        desc: '+15 základních Max HP pro každou budoucí hru.',
+        maxLevel: 10,
+        costPerLevel: (lvl) => 15 + lvl * 15
+      },
+      {
+        id: 'movespeed',
+        name: 'Rychlé Boty',
+        icon: '👟',
+        desc: '+6% permanentní rychlost pohybu postavy.',
+        maxLevel: 10,
+        costPerLevel: (lvl) => 20 + lvl * 20
+      },
+      {
+        id: 'damage',
+        name: 'Surová Síla',
+        icon: '⚔️',
+        desc: '+10% trvalý nárůst poškození pro všechny zbraně.',
+        maxLevel: 10,
+        costPerLevel: (lvl) => 25 + lvl * 25
+      },
+      {
+        id: 'xpMultiplier',
+        name: 'Moudrost Prastarých',
+        icon: '📖',
+        desc: '+12% bonus k veškerým sebraným XP krystalům.',
+        maxLevel: 10,
+        costPerLevel: (lvl) => 30 + lvl * 25
+      },
+      {
+        id: 'range',
+        name: 'Ostrý Zrak',
+        icon: '🎯',
+        desc: '+8% trvalý dosah zaměřování a střelby.',
+        maxLevel: 8,
+        costPerLevel: (lvl) => 20 + lvl * 20
+      }
+    ];
+  }
+
+  openShopModal() {
+    const modal = document.getElementById('shop-modal');
+    modal.classList.remove('hidden');
+    this.renderShopItems();
+  }
+
+  closeShopModal() {
+    const modal = document.getElementById('shop-modal');
+    modal.classList.add('hidden');
+    // Pokud jsme v menu, ukážeme start-modal
+    if (this.state === 'start' || this.state === 'gameover' || this.state === 'victory') {
+      document.getElementById('start-modal').classList.remove('hidden');
+    }
+    this.updateStatsUI();
+  }
+
+  renderShopItems() {
+    const container = document.getElementById('shop-items-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const shopItems = this.getShopDefinitions();
+    this.updateStatsUI();
+
+    shopItems.forEach((item) => {
+      const currentLevel = this.metaUpgrades[item.id] || 0;
+      const isMaxed = currentLevel >= item.maxLevel;
+      const nextCost = isMaxed ? 0 : item.costPerLevel(currentLevel);
+      const canAfford = !isMaxed && this.gold >= nextCost;
+
+      const card = document.createElement('div');
+      card.className = `shop-item-card ${isMaxed ? 'maxed' : ''}`;
+      card.innerHTML = `
+        <div class="shop-item-icon">${item.icon}</div>
+        <div class="shop-item-title">${item.name}</div>
+        <div class="shop-item-desc">${item.desc}</div>
+        <div class="shop-item-level">Úroveň: ${currentLevel} / ${item.maxLevel}</div>
+        <button class="shop-buy-btn" ${(!canAfford || isMaxed) ? 'disabled' : ''}>
+          ${isMaxed ? 'MAXIMA' : `Koupit za ${nextCost} 🪙`}
+        </button>
+      `;
+
+      const buyBtn = card.querySelector('.shop-buy-btn');
+      if (buyBtn && canAfford && !isMaxed) {
+        buyBtn.addEventListener('click', () => {
+          this.buyMetaUpgrade(item.id, nextCost);
+        });
+      }
+
+      container.appendChild(card);
+    });
+  }
+
+  buyMetaUpgrade(upgradeId, cost) {
+    if (this.gold < cost) return;
+    this.gold -= cost;
+    this.metaUpgrades[upgradeId] = (this.metaUpgrades[upgradeId] || 0) + 1;
+    this.savePersistentData();
+    if (window.sound && window.sound.pickupCoin) window.sound.pickupCoin();
+    this.renderShopItems();
   }
 }
 

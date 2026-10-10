@@ -1,5 +1,5 @@
 // sw.js - Service Worker pro Crimson Horde: Survivors (Offline caching & PWA)
-const CACHE_NAME = 'crimson-horde-v1';
+const CACHE_NAME = 'crimson-horde-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

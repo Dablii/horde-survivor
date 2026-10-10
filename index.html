@@ -40,6 +40,9 @@
         <div class="stat-badge">
           <span class="icon">💀</span> Kills: <span id="kill-count">0</span>
         </div>
+        <div class="stat-badge gold-badge">
+          <span class="icon">🪙</span> Gold: <span id="hud-gold-count">0</span>
+        </div>
       </div>
 
       <div class="hud-center">
@@ -82,6 +85,27 @@
       </div>
     </div>
 
+    <!-- Obchod s permanentními upgrady (Meta-progression) -->
+    <div id="shop-modal" class="modal hidden">
+      <div class="modal-card shop-card">
+        <h2 class="glow-gold">🏛️ SÍŇ HRDINŮ - OBCHOD 🏛️</h2>
+        <p class="subtitle">Trvalá posílení přežívající přes všechny budoucí hry</p>
+        
+        <div class="shop-gold-display">
+          <span>Tvoje celkové zlato:</span>
+          <strong class="highlight-val"><span id="shop-gold-amount">0</span> 🪙</strong>
+        </div>
+
+        <div id="shop-items-container" class="shop-grid">
+          <!-- Položky obchodu se dynamicky vygenerují sem -->
+        </div>
+
+        <div class="shop-actions">
+          <button id="btn-close-shop" class="action-btn glow-btn">Zpět do Menu ↩️</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Obrazovka mezi stage / Stage Cleared -->
     <div id="stage-clear-modal" class="modal hidden">
       <div class="modal-card">
@@ -116,12 +140,17 @@
             <strong id="final-kills" class="highlight-val">0</strong>
           </div>
           <div class="death-stat-row">
+            <span>Získané Zlato v této hře:</span>
+            <strong id="final-run-gold" class="highlight-val">0 🪙</strong>
+          </div>
+          <div class="death-stat-row">
             <span>Způsobené zranění (Damage):</span>
             <strong id="final-damage" class="highlight-val">0</strong>
           </div>
         </div>
         <div class="death-actions">
           <button id="btn-restart" class="action-btn glow-btn">Zkusit znovu 🔄</button>
+          <button id="btn-gameover-shop" class="action-btn restart-secondary-btn">Otevřít Obchod 🏛️</button>
         </div>
       </div>
     </div>
@@ -144,8 +173,15 @@
             <span>Zabitých monster:</span>
             <strong id="victory-kills" class="highlight-val">0</strong>
           </div>
+          <div class="death-stat-row">
+            <span>Získané Zlato v této hře:</span>
+            <strong id="victory-run-gold" class="highlight-val">0 🪙</strong>
+          </div>
         </div>
-        <button id="btn-victory-restart" class="action-btn glow-btn">Hrát novou hru ⚔️</button>
+        <div class="death-actions">
+          <button id="btn-victory-restart" class="action-btn glow-btn">Hrát novou hru ⚔️</button>
+          <button id="btn-victory-shop" class="action-btn restart-secondary-btn">Otevřít Obchod 🏛️</button>
+        </div>
       </div>
     </div>
 
@@ -163,15 +199,63 @@
 
     <!-- Startovací úvodní okno -->
     <div id="start-modal" class="modal">
-      <div class="modal-card">
+      <div class="modal-card start-card">
         <h1 class="game-logo">⚔️ CRIMSON HORDE ⚔️</h1>
-        <p class="flavor-text">Horde Survivor inspirovaný Vampire Survivors</p>
-        <div class="instructions-box">
-          <p><strong>Ovládání:</strong> Pohyb <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> (nebo šipky), Pauza <kbd>Esc</kbd> / <kbd>P</kbd></p>
-          <p><strong>Střelba:</strong> ⚡ Automatická (střílí na nejbližší nepřátele)</p>
-          <p><strong>Cíl:</strong> Sbírej drahokamy zkušeností (<span style="color:#00e5ff">💎 XP</span>), získávej mocné buffy při level-upu a přežij všech <strong>10 stages</strong>!</p>
+        <p class="flavor-text">Horde Survivor s roguelike meta-progresí a telegrafovanými útoky</p>
+
+        <!-- Celkové Lifetime Statistiky -->
+        <div class="stats-overview-box">
+          <div class="stats-header">🏆 CELKOVÉ STATISTIKY (LIFETIME STATS)</div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-icon">⏱️</span>
+              <div class="stat-info">
+                <span class="stat-label">Nejlepší přežitý čas</span>
+                <strong id="stats-best-time" class="stat-value">00:00</strong>
+              </div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-icon">🗺️</span>
+              <div class="stat-info">
+                <span class="stat-label">Nejvyšší dosažená Stage</span>
+                <strong id="stats-max-stage" class="stat-value">Stage 1</strong>
+              </div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-icon">⭐</span>
+              <div class="stat-info">
+                <span class="stat-label">Nejvyšší Level hráče</span>
+                <strong id="stats-max-level" class="stat-value">Lvl 1</strong>
+              </div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-icon">💀</span>
+              <div class="stat-info">
+                <span class="stat-label">Celkem zabitých monster</span>
+                <strong id="stats-total-kills" class="stat-value">0</strong>
+              </div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-icon">🪙</span>
+              <div class="stat-info">
+                <span class="stat-label">Dostupné Zlato</span>
+                <strong id="stats-gold-amount" class="stat-value">0</strong>
+              </div>
+            </div>
+          </div>
         </div>
-        <button id="btn-start" class="action-btn glow-btn start-btn">Začít lov 🩸</button>
+
+        <div class="instructions-box">
+          <p><strong>Ovládání:</strong> Pohyb <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> (nebo šipky / virtuální joystick), Pauza <kbd>Esc</kbd> / <kbd>P</kbd></p>
+          <p><strong>Střelba:</strong> ⚡ Automatická (střílí na nejbližší nepřátele v dosahu)</p>
+          <p><strong>Meta-progrese:</strong> Sbírej <span style="color:#fbbf24">🪙 Zlato</span> z monster a nakupuj trvalé upgrady v Obchodě!</p>
+          <p><strong>Pozor:</strong> Elitní nepřátelé a Bossové střílejí projektily s červenými výstražnými zónami!</p>
+        </div>
+
+        <div class="start-actions-row">
+          <button id="btn-start" class="action-btn glow-btn start-btn">Začít lov 🩸</button>
+          <button id="btn-open-shop" class="action-btn shop-btn">Obchod & Upgrady 🏛️</button>
+        </div>
       </div>
     </div>
   </div>
