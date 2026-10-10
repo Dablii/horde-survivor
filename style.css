@@ -1,6 +1,7 @@
-/* Crimson Horde: Survivors – středověký fantasy UI.
-   Optimalizovaná čitelnost fontů (Uncial Antiqua pouze v logu, Crimson Text pro text/titulky, Rajdhani/VT323 pro čísla).
-   Zachovává všechna původní id/třídy, herní logiku i stylizaci rámečků. */
+/* Crimson Horde: Survivors – Středověký fantasy UI.
+   Responzivní optimalizace pro mobily a dotyková zařízení.
+   Zajištěno: plynulé scrollování, přilepená spodní akční tlačítka, plně responzivní logo. */
+
 :root{
   --stone:#2C3531; --stone-d:#1F2723; --wood:#3E2723; --ink:#14100C;
   --parch:#F1E4C3; --gold:#D4AF37; --gold-d:#C9A432; --gold-dd:#8A6A14;
@@ -13,56 +14,265 @@
   --soft:0 10px 24px rgba(0,0,0,.45);
   --clip:polygon(14px 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,14px 100%,0 50%);
 }
+
 *{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
-body{background:#0e0b08;color:var(--parch);font-family:var(--f-text);font-size:19px;line-height:1.4;overflow:hidden;width:100vw;height:100vh;height:100dvh;display:flex;justify-content:center;align-items:center;touch-action:manipulation}
-#game-container{position:relative;width:100vw;height:100vh;height:100dvh;overflow:hidden;background:#09120e}
-#game-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.hidden{display:none}
+
+body{
+  background:#0e0b08;
+  color:var(--parch);
+  font-family:var(--f-text);
+  font-size:19px;
+  line-height:1.4;
+  overflow:hidden;
+  width:100vw;
+  height:100vh;
+  height:100dvh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  touch-action:manipulation;
+}
+
+#game-container{
+  position:relative;
+  width:100vw;
+  height:100vh;
+  height:100dvh;
+  overflow:hidden;
+  background:#09120e;
+}
+
+#game-canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+}
+
+.hidden{display:none !important}
 .ic{width:1.25em;height:1.25em;flex:none;vertical-align:middle;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .gold-text{color:var(--gold);font-weight:700}
 
 /* XP lišta */
-#xp-bar-container{position:absolute;top:0;left:0;width:100%;height:24px;background:#0B0F0D;border-bottom:2px solid var(--gold-d);z-index:10;box-shadow:0 4px 14px rgba(0,0,0,.5)}
-#xp-bar-fill{height:100%;width:0%;background:linear-gradient(#5CF1FF,#00A9C0);transition:width .15s ease-out}
-#xp-text{position:absolute;top:0;left:50%;transform:translateX(-50%);font:700 18px/24px var(--f-num);color:var(--parch);letter-spacing:1px;text-shadow:0 1px 4px #000;white-space:nowrap}
+#xp-bar-container{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:24px;
+  background:#0B0F0D;
+  border-bottom:2px solid var(--gold-d);
+  z-index:10;
+  box-shadow:0 4px 14px rgba(0,0,0,.5);
+}
+#xp-bar-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(#5CF1FF,#00A9C0);
+  transition:width .15s ease-out;
+}
+#xp-text{
+  position:absolute;
+  top:0;
+  left:50%;
+  transform:translateX(-50%);
+  font:700 18px/24px var(--f-num);
+  color:var(--parch);
+  letter-spacing:1px;
+  text-shadow:0 1px 4px #000;
+  white-space:nowrap;
+}
 
 /* HUD */
-#hud{position:absolute;top:30px;left:0;width:100%;padding:8px 24px;display:flex;justify-content:space-between;align-items:flex-start;z-index:10;pointer-events:none}
+#hud{
+  position:absolute;
+  top:30px;
+  left:0;
+  width:100%;
+  padding:8px 24px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  z-index:10;
+  pointer-events:none;
+}
 .hud-left,.hud-right,.hud-center{display:flex;gap:12px;pointer-events:auto}
 .hud-left{flex-direction:column;align-items:flex-start;gap:8px}
 .hud-center{flex-direction:column;align-items:center;gap:6px}
 .hud-right{align-items:center}
-.stat-badge,.timer-badge,.stage-badge{background:linear-gradient(rgba(44,53,49,.92),rgba(31,39,35,.92));border:2px solid rgba(201,164,50,.7);border-radius:4px;padding:6px 14px;display:flex;align-items:center;gap:8px;font-size:18px;font-weight:600;box-shadow:0 6px 14px rgba(0,0,0,.4),inset 0 0 14px rgba(0,0,0,.35)}
-.stat-badge span:not(.icon):not(.hp-bar-outer){font-family:var(--f-num);font-size:24px;font-weight:700;letter-spacing:0.5px;color:var(--parch)}
-.hp-bar-outer{width:150px;height:16px;background:#0B0F0D;border:2px solid var(--gold-d);border-radius:3px;overflow:hidden}
-#hp-bar-fill{width:100%;height:100%;background:linear-gradient(#E0584A,#A93226);transition:width .1s linear}
+
+.stat-badge,.timer-badge,.stage-badge{
+  background:linear-gradient(rgba(44,53,49,.92),rgba(31,39,35,.92));
+  border:2px solid rgba(201,164,50,.7);
+  border-radius:4px;
+  padding:6px 14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:18px;
+  font-weight:600;
+  box-shadow:0 6px 14px rgba(0,0,0,.4),inset 0 0 14px rgba(0,0,0,.35);
+}
+.stat-badge span:not(.icon):not(.hp-bar-outer){
+  font-family:var(--f-num);
+  font-size:24px;
+  font-weight:700;
+  letter-spacing:0.5px;
+  color:var(--parch);
+}
+.hp-bar-outer{
+  width:150px;
+  height:16px;
+  background:#0B0F0D;
+  border:2px solid var(--gold-d);
+  border-radius:3px;
+  overflow:hidden;
+}
+#hp-bar-fill{
+  width:100%;
+  height:100%;
+  background:linear-gradient(#E0584A,#A93226);
+  transition:width .1s linear;
+}
 .gold-badge{color:var(--gold)}
-.stage-badge{flex-direction:column;gap:0;text-align:center;font:700 19px var(--f-title);letter-spacing:0.5px;padding:6px 22px}
-#stage-name{font:600 14px var(--f-text);color:#C39BD3;letter-spacing:1.2px;text-transform:uppercase}
-.timer-badge{font:700 30px/1 var(--f-num);letter-spacing:1px;color:var(--gold);padding:3px 18px}
+.stage-badge{
+  flex-direction:column;
+  gap:0;
+  text-align:center;
+  font:700 19px var(--f-title);
+  letter-spacing:0.5px;
+  padding:6px 22px;
+}
+#stage-name{
+  font:600 14px var(--f-text);
+  color:#C39BD3;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+}
+.timer-badge{
+  font:700 30px/1 var(--f-num);
+  letter-spacing:1px;
+  color:var(--gold);
+  padding:3px 18px;
+}
 .active-buffs{display:flex;gap:6px}
-.buff-mini-tag{width:38px;height:38px;position:relative;display:flex;align-items:center;justify-content:center;background:var(--stone);border:2px solid rgba(201,164,50,.7);border-radius:4px;font-size:20px;box-shadow:0 4px 10px rgba(0,0,0,.4)}
+.buff-mini-tag{
+  width:38px;
+  height:38px;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--stone);
+  border:2px solid rgba(201,164,50,.7);
+  border-radius:4px;
+  font-size:20px;
+  box-shadow:0 4px 10px rgba(0,0,0,.4);
+}
 .buff-mini-tag svg{width:22px;height:22px}
-.buff-mini-tag strong{position:absolute;right:-5px;bottom:-6px;min-width:18px;background:var(--ink);border:1px solid var(--gold-d);border-radius:9px;font:700 15px/16px var(--f-num);text-align:center;color:var(--gold)}
-.icon-btn{width:40px;height:40px;background:var(--stone);border:2px solid rgba(201,164,50,.7);color:var(--parch);border-radius:4px;cursor:pointer;font-size:17px;transition:filter .2s,transform .2s;display:flex;align-items:center;justify-content:center}
+.buff-mini-tag strong{
+  position:absolute;
+  right:-5px;
+  bottom:-6px;
+  min-width:18px;
+  background:var(--ink);
+  border:1px solid var(--gold-d);
+  border-radius:9px;
+  font:700 15px/16px var(--f-num);
+  text-align:center;
+  color:var(--gold);
+}
+.icon-btn{
+  width:40px;
+  height:40px;
+  background:var(--stone);
+  border:2px solid rgba(201,164,50,.7);
+  color:var(--parch);
+  border-radius:4px;
+  cursor:pointer;
+  font-size:17px;
+  transition:filter .2s,transform .2s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
 .icon-btn:hover{filter:brightness(1.25);transform:translateY(-1px)}
 .icon-btn svg{width:20px;height:20px}
 
-/* Modály */
-.modal{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(30,22,16,.75),rgba(8,6,4,.92));display:flex;justify-content:center;align-items:center;z-index:100;backdrop-filter:blur(3px)}
-.modal.hidden{display:none}
-.modal-card{position:relative;max-width:820px;width:92%;max-height:94vh;overflow:auto;padding:34px 32px 30px;text-align:center;border:2px solid var(--gold-d);border-radius:6px;background:repeating-linear-gradient(0deg,rgba(0,0,0,.06) 0 3px,transparent 3px 7px),linear-gradient(160deg,#34403A,#232B27);box-shadow:0 0 0 5px var(--ink),0 22px 50px rgba(0,0,0,.6),inset 0 0 50px rgba(0,0,0,.45);animation:pop .25s ease-out}
-.modal-card::before{content:"";position:absolute;top:-9px;left:50%;width:14px;height:14px;transform:translateX(-50%) rotate(45deg);background:var(--azure);border:2px solid var(--gold);box-shadow:0 0 10px rgba(0,229,255,.6)}
-@keyframes pop{from{transform:scale(.94);opacity:0}to{transform:none;opacity:1}}
+/* Modály a okna */
+.modal{
+  position:absolute;
+  inset:0;
+  background:radial-gradient(ellipse at 50% 40%,rgba(30,22,16,.82),rgba(8,6,4,.95));
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:100;
+  backdrop-filter:blur(3px);
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+  padding:16px 8px;
+}
+.modal.hidden{display:none !important}
+
+.modal-card{
+  position:relative;
+  max-width:820px;
+  width:94%;
+  max-height:92vh;
+  max-height:92dvh;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+  overscroll-behavior:contain;
+  padding:28px 26px 26px;
+  text-align:center;
+  border:2px solid var(--gold-d);
+  border-radius:6px;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.06) 0 3px,transparent 3px 7px),linear-gradient(160deg,#34403A,#232B27);
+  box-shadow:0 0 0 5px var(--ink),0 22px 50px rgba(0,0,0,.6),inset 0 0 50px rgba(0,0,0,.45);
+  animation:pop .22s ease-out;
+  margin:auto;
+}
+.modal-card::before{
+  content:"";
+  position:absolute;
+  top:-9px;
+  left:50%;
+  width:14px;
+  height:14px;
+  transform:translateX(-50%) rotate(45deg);
+  background:var(--azure);
+  border:2px solid var(--gold);
+  box-shadow:0 0 10px rgba(0,229,255,.6);
+}
+@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:none;opacity:1}}
+
 h1,h2{font-family:var(--f-title);font-weight:700;letter-spacing:0.5px}
 .glow-text{color:var(--parch);font-size:32px;font-weight:700;margin-bottom:6px;text-shadow:0 2px 10px rgba(0,229,255,.35)}
 .glow-gold{color:var(--gold);font-size:34px;font-weight:700;margin-bottom:12px;text-shadow:0 2px 12px rgba(212,175,55,.4)}
-.subtitle{color:rgba(241,228,195,.85);font-size:19px;margin-bottom:22px}
+.subtitle{color:rgba(241,228,195,.85);font-size:19px;margin-bottom:20px}
 
-/* Karty buffů */
+/* Karty buffů při Level-upu */
 .cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.upgrade-card{--rc:var(--parch);display:flex;flex-direction:column;align-items:center;padding:20px 14px 16px;cursor:pointer;background:linear-gradient(#35413B,#252E2A);border:2px solid var(--rc);border-radius:6px;box-shadow:0 0 18px color-mix(in srgb,var(--rc) 25%,transparent),0 10px 20px rgba(0,0,0,.5);transition:transform .2s,box-shadow .2s}
+.upgrade-card{
+  --rc:var(--parch);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:20px 14px 16px;
+  cursor:pointer;
+  background:linear-gradient(#35413B,#252E2A);
+  border:2px solid var(--rc);
+  border-radius:6px;
+  box-shadow:0 0 18px color-mix(in srgb,var(--rc) 25%,transparent),0 10px 20px rgba(0,0,0,.5);
+  transition:transform .2s,box-shadow .2s;
+}
 .upgrade-card:hover{transform:translateY(-6px);box-shadow:0 0 28px color-mix(in srgb,var(--rc) 45%,transparent),0 14px 26px rgba(0,0,0,.55)}
 .rarity-common{--rc:#C9BFA0}.rarity-rare{--rc:var(--azure)}.rarity-epic{--rc:#A569BD}.rarity-legendary{--rc:var(--gold)}
 .card-icon{font-size:46px;margin-bottom:10px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));display:flex;align-items:center;justify-content:center}
@@ -72,8 +282,19 @@ h1,h2{font-family:var(--f-title);font-weight:700;letter-spacing:0.5px}
 .card-desc{font:400 17px/1.35 var(--f-text);color:rgba(241,228,195,.9);margin-bottom:12px;flex-grow:1}
 .card-level-tag{font:700 19px var(--f-num);letter-spacing:1px;color:var(--gold);background:rgba(0,0,0,.45);padding:2px 14px;border-radius:10px}
 
-/* Tlačítka – šestihranný rám se zlatým lemem */
-.action-btn,.shop-buy-btn{font:700 21px var(--f-title);letter-spacing:0.5px;color:var(--parch);text-shadow:0 2px 6px rgba(0,0,0,.6);cursor:pointer;padding:15px 44px;border:3px solid transparent;clip-path:var(--clip);background:linear-gradient(#2E7D4A,#173022) padding-box,linear-gradient(#FFF1B0,var(--gold) 50%,var(--gold-dd)) border-box;transition:filter .2s,transform .2s}
+/* Tlačítka */
+.action-btn,.shop-buy-btn{
+  font:700 21px var(--f-title);
+  letter-spacing:0.5px;
+  color:var(--parch);
+  text-shadow:0 2px 6px rgba(0,0,0,.6);
+  cursor:pointer;
+  padding:15px 44px;
+  border:3px solid transparent;
+  clip-path:var(--clip);
+  background:linear-gradient(#2E7D4A,#173022) padding-box,linear-gradient(#FFF1B0,var(--gold) 50%,var(--gold-dd)) border-box;
+  transition:filter .2s,transform .2s;
+}
 .action-btn:hover,.shop-buy-btn:hover:not(:disabled){filter:brightness(1.18)}
 .action-btn:focus-visible,.shop-buy-btn:focus-visible,.icon-btn:focus-visible{outline:3px solid var(--azure);outline-offset:3px}
 .shop-btn{background:linear-gradient(#5A3A2E,#2A1812) padding-box,linear-gradient(#FFF1B0,var(--gold) 50%,var(--gold-dd)) border-box}
@@ -92,12 +313,29 @@ h1,h2{font-family:var(--f-title);font-weight:700;letter-spacing:0.5px}
 #final-survival-time,#victory-time{color:var(--gold)}
 .reward-preview{margin:14px 0 22px;color:rgba(241,228,195,.85)}
 
-/* Úvodní okno */
+/* Úvodní okno (Main Menu) */
 .start-card{max-width:880px}
-.game-logo{width:min(560px,86%);margin:0 auto 6px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.45))}
-.game-logo svg{display:block;width:100%}
-.flavor-text{color:rgba(241,228,195,.8);font-size:19px;margin-bottom:20px}
-.stats-overview-box{background:repeating-linear-gradient(0deg,#2C3531 0 6px,#29312D 6px 12px);border:2px solid var(--gold-d);border-radius:4px;box-shadow:inset 0 0 40px rgba(0,0,0,.6),0 8px 18px rgba(0,0,0,.4);padding:14px 18px 16px;margin-bottom:20px}
+.game-logo{
+  width:min(520px,94%);
+  max-width:100%;
+  margin:0 auto 6px;
+  filter:drop-shadow(0 6px 10px rgba(0,0,0,.45));
+}
+.game-logo svg{
+  display:block;
+  width:100%;
+  height:auto;
+  max-height:130px;
+}
+.flavor-text{color:rgba(241,228,195,.8);font-size:18px;margin-bottom:18px}
+.stats-overview-box{
+  background:repeating-linear-gradient(0deg,#2C3531 0 6px,#29312D 6px 12px);
+  border:2px solid var(--gold-d);
+  border-radius:4px;
+  box-shadow:inset 0 0 40px rgba(0,0,0,.6),0 8px 18px rgba(0,0,0,.4);
+  padding:14px 18px 16px;
+  margin-bottom:18px;
+}
 .stats-header{font:700 20px var(--f-title);letter-spacing:0.5px;color:var(--gold);margin-bottom:10px;text-shadow:0 1px 4px #000}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .stat-card{display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(0,0,0,.26);border:1px solid rgba(255,255,255,.09);border-radius:4px;text-align:left}
@@ -105,7 +343,16 @@ h1,h2{font-family:var(--f-title);font-weight:700;letter-spacing:0.5px}
 .stat-info{display:flex;flex-direction:column}
 .stat-label{font-size:15px;font-weight:600;color:#B8C9C0;text-shadow:0 1px 2px #000}
 .stat-value{font:700 28px/1 var(--f-num);letter-spacing:0.5px;color:var(--gold)}
-.instructions-box{background:rgba(0,0,0,.3);border:1px solid rgba(201,164,50,.35);border-radius:4px;padding:14px 18px;margin-bottom:22px;text-align:left;line-height:1.6;font-size:17px}
+.instructions-box{
+  background:rgba(0,0,0,.3);
+  border:1px solid rgba(201,164,50,.35);
+  border-radius:4px;
+  padding:14px 18px;
+  margin-bottom:20px;
+  text-align:left;
+  line-height:1.6;
+  font-size:17px;
+}
 kbd{background:var(--stone);border:1px solid var(--gold-d);border-radius:3px;padding:2px 8px;font:700 17px var(--f-num);color:var(--azure)}
 
 /* Obchod */
@@ -125,16 +372,161 @@ kbd{background:var(--stone);border:1px solid var(--gold-d);border-radius:3px;pad
 .svg-inline-coin{display:inline-flex;vertical-align:middle}
 .svg-inline-coin svg{width:1.15em;height:1.15em}
 
-/* Joystick */
+/* Joystick pro mobily */
 #joystick-zone{position:absolute;bottom:30px;left:30px;width:140px;height:140px;z-index:50;pointer-events:auto;touch-action:none}
-#joystick-zone.hidden{display:none}
+#joystick-zone.hidden{display:none !important}
 #joystick-base{position:relative;width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(44,53,49,.45),rgba(20,16,12,.7));border:2px solid rgba(201,164,50,.6);box-shadow:0 0 16px rgba(0,0,0,.5);display:flex;justify-content:center;align-items:center}
 #joystick-thumb{position:absolute;width:54px;height:54px;border-radius:50%;background:radial-gradient(circle,#FFF1B0 10%,var(--gold-d) 90%);border:2px solid var(--ink);box-shadow:0 0 12px rgba(212,175,55,.6);pointer-events:none;transform:translate(0,0);transition:transform .05s ease-out}
 
+/* ========================================================
+   RESPONZIVNÍ PRAVIDLA PRO MOBILY A MENŠÍ DISPLEJE (≤ 768px)
+   ======================================================== */
 @media (max-width:768px){
+  /* HUD v horní části mobilu */
   #hud{padding:6px 10px;top:28px}
-  .stat-badge{padding:3px 8px;font-size:15px}.hp-bar-outer{width:90px;height:12px}
-  .stage-badge{font-size:16px;padding:3px 10px}#stage-name{font-size:11px}.timer-badge{font-size:24px}
-  .cards-grid{grid-template-columns:1fr;gap:10px}.upgrade-card{flex-direction:row;flex-wrap:wrap;justify-content:center;padding:12px}
-  .modal-card{padding:24px 16px 20px}.action-btn{padding:12px 28px;font-size:18px}.glow-gold,.glow-text{font-size:26px}
+  .stat-badge{padding:4px 8px;font-size:14px;gap:5px}
+  .stat-badge span:not(.icon):not(.hp-bar-outer){font-size:20px}
+  .hp-bar-outer{width:80px;height:12px}
+  .stage-badge{font-size:15px;padding:3px 10px}
+  #stage-name{font-size:11px;letter-spacing:1px}
+  .timer-badge{font-size:22px;padding:2px 10px}
+  .icon-btn{width:34px;height:34px;font-size:14px}
+  .buff-mini-tag{width:32px;height:32px}
+  .buff-mini-tag svg{width:18px;height:18px}
+
+  /* Modální kontejner na mobilu začíná nahoře a lze v něm plynule scrollovat */
+  .modal{
+    align-items:flex-start;
+    padding:8px 6px 20px;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .modal-card{
+    width:98%;
+    max-width:100%;
+    max-height:none;
+    margin:0 auto;
+    padding:16px 12px 14px;
+    box-shadow:0 0 0 3px var(--ink),0 12px 30px rgba(0,0,0,.7);
+  }
+
+  /* Logo a nadpisy na mobilu */
+  .game-logo{
+    width:96%;
+    max-width:360px;
+    margin:0 auto 4px;
+  }
+  .game-logo svg{
+    max-height:85px;
+  }
+  .flavor-text{
+    font-size:14px;
+    line-height:1.25;
+    margin-bottom:8px;
+  }
+
+  /* Kompaktní statistiky na mobilu */
+  .stats-overview-box{
+    padding:8px 10px;
+    margin-bottom:8px;
+  }
+  .stats-header{
+    font-size:15px;
+    margin-bottom:6px;
+  }
+  .stats-grid{
+    grid-template-columns:repeat(2,1fr);
+    gap:6px;
+  }
+  .stat-card{
+    padding:4px 8px;
+    gap:6px;
+  }
+  .stat-card:last-child{
+    grid-column:span 2;
+  }
+  .stat-icon{font-size:18px}
+  .stat-icon .ic{width:20px;height:20px}
+  .stat-label{font-size:12px;line-height:1.15}
+  .stat-value{font-size:20px;line-height:1.1}
+
+  /* Kompaktní rámeček ovládání */
+  .instructions-box{
+    padding:8px 10px;
+    margin-bottom:8px;
+    font-size:13px;
+    line-height:1.35;
+  }
+  .instructions-box p{margin-bottom:4px}
+  .instructions-box p:last-child{margin-bottom:0}
+  kbd{font-size:13px;padding:1px 5px}
+
+  /* Přilepená spodní akční tlačítka pro okamžitou přístupnost na mobilu */
+  .start-actions-row, .death-actions, .shop-actions{
+    position:sticky;
+    bottom:-14px;
+    background:linear-gradient(to top, rgba(20,16,12,.98) 78%, rgba(20,16,12,0));
+    padding:10px 4px 6px;
+    margin:8px -12px -14px;
+    z-index:30;
+    backdrop-filter:blur(4px);
+    display:flex;
+    gap:8px;
+    flex-wrap:nowrap;
+  }
+  .start-actions-row .action-btn,
+  .death-actions .action-btn,
+  .shop-actions .action-btn{
+    flex:1;
+    min-width:0;
+    padding:12px 14px;
+    font-size:17px;
+  }
+  .start-btn{
+    flex:1.2;
+    font-size:19px;
+    padding:12px 16px;
+  }
+  .shop-btn{
+    flex:1;
+    font-size:15px;
+    padding:12px 10px;
+  }
+
+  /* Level up karty */
+  .cards-grid{grid-template-columns:1fr;gap:10px}
+  .upgrade-card{
+    flex-direction:row;
+    flex-wrap:wrap;
+    justify-content:center;
+    padding:12px;
+  }
+
+  /* Obchod na mobilu */
+  .shop-grid{grid-template-columns:1fr;gap:10px}
+  .shop-gold-display{font-size:16px;margin-bottom:12px}
+  .shop-gold-display strong{font-size:24px}
+  .shop-item-card{padding:12px 10px}
+
+  /* Game Over & Victory modály */
+  .death-title{font-size:30px;margin-bottom:10px}
+  .death-stats{padding:10px 14px;margin:10px 0 14px;gap:6px}
+  .death-stat-row{font-size:16px;padding-bottom:4px}
+  .highlight-val{font-size:22px}
+  .glow-gold,.glow-text{font-size:25px}
+  .subtitle{font-size:15px;margin-bottom:12px}
+}
+
+/* Velmi malé displeje (např. iPhone SE, starší smartphony ≤ 480px) */
+@media (max-width:480px){
+  .game-logo svg{max-height:72px}
+  .flavor-text{font-size:12.5px;margin-bottom:6px}
+  .stats-overview-box{padding:6px 8px;margin-bottom:6px}
+  .stat-card{padding:3px 6px;gap:4px}
+  .stat-label{font-size:11px}
+  .stat-value{font-size:18px}
+  .instructions-box{font-size:12px;line-height:1.28;padding:6px 8px}
+  .start-actions-row .action-btn{font-size:15px;padding:11px 8px}
+  .start-btn{font-size:17px}
+  .shop-btn{font-size:14px}
 }
