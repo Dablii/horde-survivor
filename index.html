@@ -6,7 +6,7 @@
   <title>Crimson Horde: Survivors</title>
   
   <!-- PWA & Mobile Meta Tags -->
-  <meta name="theme-color" content="#0d0907">
+  <meta name="theme-color" content="#2C3531">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Crimson Horde">
@@ -17,11 +17,12 @@
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=MedievalSharp&family=Uncial+Antiqua&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Crimson+Text:wght@400;600;700&family=VT323&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div id="game-container">
-    <!-- Horní ukazatel XP (Mana) -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF1B0"/><stop offset=".5" stop-color="#D4AF37"/><stop offset="1" stop-color="#8A6A14"/></linearGradient></defs><symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="url(#gold)" stroke="#4A3408" stroke-width="1.5"/><circle cx="12" cy="12" r="7" fill="none" stroke="#8A6A14"/><path d="M12 6.5 16 12 12 17.5 8 12Z" fill="#F1E4C3" stroke="#8A6A14"/></symbol><symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 21C2 14 3 5 8 5c2 0 3 1.5 4 3 1-1.5 2-3 4-3 5 0 6 9-4 16Z" fill="#C0392B" stroke="#D4AF37" stroke-width="1.5" stroke-linejoin="round"/></symbol><symbol id="i-skull" viewBox="0 0 24 24"><path d="M12 3C7 3 4 6.5 4 11c0 2.5 1 4 3 5v3h10v-3c2-1 3-2.500 3-5 0-4.500-3-8-8-8Z" fill="#F1E4C3" stroke="#2A1608" stroke-width="1.5"/><circle cx="9" cy="11.500" r="2" fill="#2A1608"/><circle cx="15" cy="11.500" r="2" fill="#2A1608"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#D4AF37" stroke-width="2"/><path d="M12 6v6l4 2" stroke="#F1E4C3" stroke-width="2" fill="none" stroke-linecap="round"/></symbol><symbol id="i-star" viewBox="0 0 24 24"><path d="m12 2 3 6.500 7 .8-5.200 4.700 1.500 7L12 17.500 5.700 21l1.500-7L2 9.300l7-.8Z" fill="url(#gold)" stroke="#4A3408" stroke-width="1.200" stroke-linejoin="round"/></symbol><symbol id="i-map" viewBox="0 0 24 24"><path d="m3 6 6-2 6 2 6-2v14l-6 2-6-2-6 2Z" fill="#3E2723" stroke="#D4AF37" stroke-width="1.500" stroke-linejoin="round"/><path d="M9 4v14M15 6v14" stroke="#D4AF37" stroke-width="1"/></symbol><symbol id="i-swords" viewBox="0 0 24 24"><g id="sw"><path d="M12 2l1.800 2v10h-3.600V4Z" fill="#DFE6E9" stroke="#2A1608" stroke-width="1"/><rect x="8" y="14" width="8" height="2" fill="#D4AF37" stroke="#2A1608" stroke-width=".8"/><rect x="11" y="16" width="2" height="5" fill="#8A5A2B"/></g></symbol><symbol id="i-gem" viewBox="0 0 24 24"><path d="M12 2l8 7-8 13L4 9Z" fill="#00E5FF" stroke="#07505A" stroke-width="1.500" stroke-linejoin="round"/><path d="M4 9h16" stroke="#07505A"/><path d="M8 6l2-1" stroke="#fff" stroke-width="2" opacity=".7"/></symbol></svg>
+    <!-- Horní ukazatel XP -->
     <div id="xp-bar-container">
       <div id="xp-bar-fill"></div>
       <div id="xp-text">LVL <span id="level-display">1</span> - <span id="xp-ratio">0/10</span> XP</div>
@@ -31,27 +32,27 @@
     <header id="hud">
       <div class="hud-left">
         <div class="stat-badge hp-badge">
-          <span class="icon" id="hud-icon-hp"></span>
+          <svg class="ic" aria-hidden="true"><use href="#i-heart"/></svg>
           <div class="hp-bar-outer">
             <div id="hp-bar-fill"></div>
           </div>
           <span id="hp-text">100/100</span>
         </div>
         <div class="stat-badge">
-          <span class="icon" id="hud-icon-kill"></span> <span id="kill-count">0</span>
+          <svg class="ic" aria-hidden="true"><use href="#i-skull"/></svg> Zabito: <span id="kill-count">0</span>
         </div>
         <div class="stat-badge gold-badge">
-          <span class="icon" id="hud-icon-gold"></span> <span id="hud-gold-count">0</span>
+          <svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg> Zlato: <span id="hud-gold-count">0</span>
         </div>
       </div>
 
       <div class="hud-center">
         <div class="stage-badge">
-          Stage <span id="stage-display">1</span> / <span id="max-stage-display">10</span>
-          <div id="stage-name">Smaragdové Pláně Šerolesa</div>
+          Stage: <span id="stage-display">1</span> / <span id="max-stage-display">10</span>
+          <div id="stage-name">Les Nemrtvých</div>
         </div>
         <div class="timer-badge">
-          <span class="icon" id="hud-icon-timer"></span> <span id="survival-timer">00:00</span>
+          <span id="survival-timer">00:00</span>
         </div>
       </div>
 
@@ -59,8 +60,8 @@
         <div class="active-buffs" id="active-buffs-list">
           <!-- Mini ikony získaných vylepšení -->
         </div>
-        <button id="btn-audio" class="icon-btn" title="Zvuk zap/vyp"></button>
-        <button id="btn-pause" class="icon-btn" title="Pauza (Escape / P)"></button>
+        <button id="btn-audio" class="icon-btn" title="Zvuk zap/vyp">🔊</button>
+        <button id="btn-pause" class="icon-btn" title="Pauza (Escape / P)">⏸️</button>
       </div>
     </header>
 
@@ -77,8 +78,8 @@
     <!-- Výběr buffů při level upu -->
     <div id="levelup-modal" class="modal hidden">
       <div class="modal-card">
-        <h2 class="glow-text">POVÝŠENÍ HRDINY</h2>
-        <p class="subtitle">Vyber si jedno prastaré požehnání do dalšího boje:</p>
+        <h2 class="glow-text">Level Up!</h2>
+        <p class="subtitle">Vyber si jedno posílení své postavy:</p>
         <div id="cards-container" class="cards-grid">
           <!-- 3 karty se dynamicky vloží sem -->
         </div>
@@ -88,12 +89,12 @@
     <!-- Obchod s permanentními upgrady (Meta-progression) -->
     <div id="shop-modal" class="modal hidden">
       <div class="modal-card shop-card">
-        <h2 class="glow-gold">SÍŇ HRDINŮ & ZBROJNICE</h2>
-        <p class="subtitle">Trvalá posílení přežívající skrze generace lovců</p>
+        <h2 class="glow-gold">Síň Hrdinů</h2>
+        <p class="subtitle">Trvalá posílení přežívající přes všechny budoucí hry</p>
         
         <div class="shop-gold-display">
-          <span>Královská pokladnice:</span>
-          <strong class="highlight-val"><span id="shop-gold-amount">0</span> <span class="svg-inline-coin" style="display:inline-flex; vertical-align:middle;"></span></strong>
+          <span>Tvoje celkové zlato:</span>
+          <strong class="highlight-val"><span id="shop-gold-amount">0</span> <svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg></strong>
         </div>
 
         <div id="shop-items-container" class="shop-grid">
@@ -101,7 +102,7 @@
         </div>
 
         <div class="shop-actions">
-          <button id="btn-close-shop" class="action-btn glow-btn">Zpět do Tábora</button>
+          <button id="btn-close-shop" class="action-btn glow-btn">Zpět do Menu</button>
         </div>
       </div>
     </div>
@@ -109,19 +110,19 @@
     <!-- Obrazovka mezi stage / Stage Cleared -->
     <div id="stage-clear-modal" class="modal hidden">
       <div class="modal-card">
-        <h2 class="glow-gold">ZÓNA PROČIŠTĚNA</h2>
-        <p id="stage-clear-desc">Přežil jsi nápor temných sil v této oblasti!</p>
+        <h2 class="glow-gold">Stage dokončena!</h2>
+        <p id="stage-clear-desc">Přežil jsi nápor v této zóně!</p>
         <div class="reward-preview">
-          <p>Připrav se na mocnější monstra v další části království.</p>
+          <p>Připrav se na těžší monstra v další stage!</p>
         </div>
-        <button id="btn-next-stage" class="action-btn glow-btn">Postoupit do další Stage</button>
+        <button id="btn-next-stage" class="action-btn glow-btn">Vstoupit do další Stage</button>
       </div>
     </div>
 
     <!-- Game Over Screen -->
     <div id="gameover-modal" class="modal hidden">
       <div class="modal-card death-card">
-        <h1 class="death-title"><span class="modal-skull-icon"></span> PADL JSI V BOJI <span class="modal-skull-icon"></span></h1>
+        <h1 class="death-title">Zemřel jsi</h1>
         <div class="death-stats">
           <div class="death-stat-row">
             <span>Doba přežití (Survival Time):</span>
@@ -141,7 +142,7 @@
           </div>
           <div class="death-stat-row">
             <span>Získané Zlato v této hře:</span>
-            <strong id="final-run-gold" class="highlight-val">0</strong>
+            <strong id="final-run-gold" class="highlight-val">0 🪙</strong>
           </div>
           <div class="death-stat-row">
             <span>Způsobené zranění (Damage):</span>
@@ -150,7 +151,7 @@
         </div>
         <div class="death-actions">
           <button id="btn-restart" class="action-btn glow-btn">Zkusit znovu</button>
-          <button id="btn-gameover-shop" class="action-btn restart-secondary-btn">Síň Hrdinů</button>
+          <button id="btn-gameover-shop" class="action-btn restart-secondary-btn">Otevřít Obchod</button>
         </div>
       </div>
     </div>
@@ -158,8 +159,8 @@
     <!-- Victory Screen (Pokoření všech 10 stages) -->
     <div id="victory-modal" class="modal hidden">
       <div class="modal-card victory-card">
-        <h1 class="glow-gold">ŠAMPION KRÁLOVSTVÍ</h1>
-        <p class="subtitle">Vyčistil jsi všech 10 říší a zlomil moc Karmínového vládce!</p>
+        <h1 class="glow-gold">Šampion Horde!</h1>
+        <p>Přežil jsi všech 10 stages a vyčistil temné hordy!</p>
         <div class="death-stats">
           <div class="death-stat-row">
             <span>Celkový čas přežití:</span>
@@ -175,12 +176,12 @@
           </div>
           <div class="death-stat-row">
             <span>Získané Zlato v této hře:</span>
-            <strong id="victory-run-gold" class="highlight-val">0</strong>
+            <strong id="victory-run-gold" class="highlight-val">0 🪙</strong>
           </div>
         </div>
         <div class="death-actions">
-          <button id="btn-victory-restart" class="action-btn glow-btn">Započít novou pouť</button>
-          <button id="btn-victory-shop" class="action-btn restart-secondary-btn">Síň Hrdinů</button>
+          <button id="btn-victory-restart" class="action-btn glow-btn">Hrát novou hru</button>
+          <button id="btn-victory-shop" class="action-btn restart-secondary-btn">Otevřít Obchod</button>
         </div>
       </div>
     </div>
@@ -188,10 +189,10 @@
     <!-- Pause Modal -->
     <div id="pause-modal" class="modal hidden">
       <div class="modal-card pause-card">
-        <h2 class="glow-text">HRA POZASTAVENA</h2>
-        <p class="subtitle">Boj byl přerušen. Můžeš pokračovat nebo hru restartovat od začátku.</p>
+        <h2 class="glow-text">Hra pozastavena</h2>
+        <p class="subtitle">Hra je pozastavena. Můžeš pokračovat nebo hru restartovat od začátku.</p>
         <div class="pause-actions">
-          <button id="btn-resume" class="action-btn glow-btn">Pokračovat v bitvě</button>
+          <button id="btn-resume" class="action-btn glow-btn">Pokračovat ve hře</button>
           <button id="btn-pause-restart" class="action-btn restart-secondary-btn">Restartovat hru</button>
         </div>
       </div>
@@ -200,45 +201,45 @@
     <!-- Startovací úvodní okno -->
     <div id="start-modal" class="modal">
       <div class="modal-card start-card">
-        <h1 class="game-logo"><span class="logo-sword-left"></span> CRIMSON HORDE <span class="logo-sword-right"></span></h1>
-        <p class="flavor-text">Temná středověká roguelike akce inspirovaná legendami o přežití</p>
+        <h1 class="game-logo"><svg viewBox="0 0 600 210" role="img" aria-label="Crimson Horde"><defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF1B0"/><stop offset=".5" stop-color="#D4AF37"/><stop offset="1" stop-color="#8A6A14"/></linearGradient></defs><polygon points="0,115 44,78 44,152" fill="url(#lg)"/><polygon points="600,115 556,78 556,152" fill="url(#lg)"/><polygon points="38,92 70,62 530,62 562,92 562,138 530,168 70,168 38,138" fill="#1B120D" stroke="url(#lg)" stroke-width="4"/><polygon points="52,96 76,74 524,74 548,96 548,134 524,156 76,156 52,134" fill="none" stroke="#D4AF37" stroke-width="1.500" opacity=".7"/><polygon points="300,0 326,30 300,64 274,30" fill="#00E5FF" stroke="url(#lg)" stroke-width="4"/><polygon points="300,6 312,30 300,40 288,30" fill="#E0FFFF" opacity=".75"/><text x="300" y="130" text-anchor="middle" textLength="470" lengthAdjust="spacingAndGlyphs" font-family="Uncial Antiqua,serif" font-size="56" fill="url(#lg)" stroke="#2A1608" stroke-width="3" paint-order="stroke">CRIMSON HORDE</text><polygon points="110,180 470,180 500,186 470,192 110,192" fill="#DFE6E9" stroke="#2A1608" stroke-width="2"/><rect x="96" y="172" width="8" height="28" fill="url(#lg)"/><circle cx="76" cy="186" r="7" fill="url(#lg)"/></svg></h1>
+        <p class="flavor-text">Horde Survivor s roguelike meta-progresí a telegrafovanými útoky</p>
 
         <!-- Celkové Lifetime Statistiky -->
         <div class="stats-overview-box">
-          <div class="stats-header"><span class="stats-trophy-icon"></span> KRONIKA HRDINŮ &bull; CELKOVÉ STATISTIKY</div>
+          <div class="stats-header">Celkové statistiky</div>
           <div class="stats-grid">
             <div class="stat-card">
-              <span class="stat-icon" id="stat-icon-time"></span>
+              <span class="stat-icon"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg></span>
               <div class="stat-info">
                 <span class="stat-label">Nejlepší přežitý čas</span>
                 <strong id="stats-best-time" class="stat-value">00:00</strong>
               </div>
             </div>
             <div class="stat-card">
-              <span class="stat-icon" id="stat-icon-stage"></span>
+              <span class="stat-icon"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg></span>
               <div class="stat-info">
                 <span class="stat-label">Nejvyšší dosažená Stage</span>
                 <strong id="stats-max-stage" class="stat-value">Stage 1</strong>
               </div>
             </div>
             <div class="stat-card">
-              <span class="stat-icon" id="stat-icon-level"></span>
+              <span class="stat-icon"><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg></span>
               <div class="stat-info">
-                <span class="stat-label">Nejvyšší Level hrdiny</span>
+                <span class="stat-label">Nejvyšší Level hráče</span>
                 <strong id="stats-max-level" class="stat-value">Lvl 1</strong>
               </div>
             </div>
             <div class="stat-card">
-              <span class="stat-icon" id="stat-icon-kills"></span>
+              <span class="stat-icon"><svg class="ic" aria-hidden="true"><use href="#i-skull"/></svg></span>
               <div class="stat-info">
-                <span class="stat-label">Zabitých monster</span>
+                <span class="stat-label">Celkem zabitých monster</span>
                 <strong id="stats-total-kills" class="stat-value">0</strong>
               </div>
             </div>
             <div class="stat-card">
-              <span class="stat-icon" id="stat-icon-gold"></span>
+              <span class="stat-icon"><svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg></span>
               <div class="stat-info">
-                <span class="stat-label">Královská pokladnice</span>
+                <span class="stat-label">Dostupné Zlato</span>
                 <strong id="stats-gold-amount" class="stat-value">0</strong>
               </div>
             </div>
@@ -246,15 +247,15 @@
         </div>
 
         <div class="instructions-box">
-          <p><strong>Pohyb:</strong> Klávesy <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> / šipky nebo dotykový joystick, Pauza <kbd>Esc</kbd> / <kbd>P</kbd></p>
-          <p><strong>Boj:</strong> Automatické zaměřování a střelba na nejbližší monstra v dosahu tvých zbraní.</p>
-          <p><strong>Progrese:</strong> Sbírej modré XP krystaly, získávej mocná vylepšení a shromažďuj zlaté mince pro Síň Hrdinů.</p>
-          <p><strong>Výstraha:</strong> Bossové a elitní jednotky telegrafují nebezpečné útoky rudou runovou zónou &ndash; okamžitě uhni!</p>
+          <p><strong>Ovládání:</strong> Pohyb <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> (nebo šipky / virtuální joystick), Pauza <kbd>Esc</kbd> / <kbd>P</kbd></p>
+          <p><strong>Střelba:</strong> ⚡ Automatická (střílí na nejbližší nepřátele v dosahu)</p>
+          <p><strong>Meta-progrese:</strong> Sbírej <span class="gold-text">Zlato</span> z monster a nakupuj trvalé upgrady v Obchodě!</p>
+          <p><strong>Pozor:</strong> Elitní nepřátelé a Bossové střílejí projektily s červenými výstražnými zónami!</p>
         </div>
 
         <div class="start-actions-row">
-          <button id="btn-start" class="action-btn glow-btn start-btn"><span class="btn-sword-icon"></span> Vstoupit do Boje</button>
-          <button id="btn-open-shop" class="action-btn shop-btn"><span class="btn-shop-icon"></span> Síň Hrdinů & Zbrojnice</button>
+          <button id="btn-start" class="action-btn glow-btn start-btn">Začít lov</button>
+          <button id="btn-open-shop" class="action-btn shop-btn">Obchod & Upgrady</button>
         </div>
       </div>
     </div>
