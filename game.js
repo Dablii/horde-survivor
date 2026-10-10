@@ -87,7 +87,53 @@ class Game {
     // UI reference
     this.setupUI();
     this.setupJoystick();
+    this.setupStaticIcons();
     this.updateStatsUI();
+  }
+
+  setupStaticIcons() {
+    if (!window.getSvg) return;
+
+    const setHtml = (id, svgName) => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = window.getSvg(svgName);
+    };
+
+    const setAllHtml = (selector, svgName) => {
+      document.querySelectorAll(selector).forEach(el => {
+        el.innerHTML = window.getSvg(svgName);
+      });
+    };
+
+    // HUD ikony
+    setHtml('hud-icon-hp', 'heart');
+    setHtml('hud-icon-kill', 'skull');
+    setHtml('hud-icon-gold', 'coin');
+    setHtml('hud-icon-timer', 'hourglass');
+    setHtml('btn-pause', 'pause');
+
+    // Audio tlačítko
+    const audioBtn = document.getElementById('btn-audio');
+    if (audioBtn) {
+      const isMuted = window.sound && window.sound.isMuted;
+      audioBtn.innerHTML = isMuted ? window.getSvg('soundOff') : window.getSvg('soundOn');
+    }
+
+    // Ikony v menu a lifetime statistikách
+    setHtml('stat-icon-time', 'hourglass');
+    setHtml('stat-icon-stage', 'map');
+    setHtml('stat-icon-level', 'star');
+    setHtml('stat-icon-kills', 'skull');
+    setHtml('stat-icon-gold', 'coin');
+
+    // Třídy v záhlavích a modalech
+    setAllHtml('.svg-inline-coin', 'coin');
+    setAllHtml('.modal-skull-icon', 'skull');
+    setAllHtml('.logo-sword-left', 'sword');
+    setAllHtml('.logo-sword-right', 'sword');
+    setAllHtml('.stats-trophy-icon', 'trophy');
+    setAllHtml('.btn-sword-icon', 'sword');
+    setAllHtml('.btn-shop-icon', 'temple');
   }
 
   resizeCanvas() {
@@ -143,10 +189,12 @@ class Game {
 
     // Zvuk mute/unmute
     const audioBtn = document.getElementById('btn-audio');
-    audioBtn.addEventListener('click', () => {
-      const isMuted = window.sound.toggleMute();
-      audioBtn.textContent = isMuted ? '🔇' : '🔊';
-    });
+    if (audioBtn) {
+      audioBtn.addEventListener('click', () => {
+        const isMuted = window.sound.toggleMute();
+        audioBtn.innerHTML = isMuted ? window.getSvg('soundOff') : window.getSvg('soundOn');
+      });
+    }
 
     // Otevření obchodu ze startovacího menu
     const openShopBtn = document.getElementById('btn-open-shop');
@@ -766,12 +814,13 @@ class Game {
     // Uložit lifetime statistiky
     this.recordRunStatistics();
 
+    const coinSvg = window.getSvg ? window.getSvg('coin') : '';
     const modal = document.getElementById('gameover-modal');
     document.getElementById('final-survival-time').textContent = this.formatTime(this.survivalTime);
     document.getElementById('final-stage').textContent = `${this.currentStageConfig.stage} (${this.currentStageConfig.name})`;
     document.getElementById('final-level').textContent = this.player.level;
     document.getElementById('final-kills').textContent = this.totalKills;
-    document.getElementById('final-run-gold').textContent = `${this.runGold} 🪙`;
+    document.getElementById('final-run-gold').innerHTML = `${this.runGold} <span class="svg-inline-coin" style="display:inline-flex;vertical-align:middle;margin-left:4px;">${coinSvg}</span>`;
     document.getElementById('final-damage').textContent = this.totalDamageDealt;
 
     modal.classList.remove('hidden');
@@ -784,11 +833,12 @@ class Game {
     // Uložit lifetime statistiky
     this.recordRunStatistics();
 
+    const coinSvg = window.getSvg ? window.getSvg('coin') : '';
     const modal = document.getElementById('victory-modal');
     document.getElementById('victory-time').textContent = this.formatTime(this.survivalTime);
     document.getElementById('victory-level').textContent = this.player.level;
     document.getElementById('victory-kills').textContent = this.totalKills;
-    document.getElementById('victory-run-gold').textContent = `${this.runGold} 🪙`;
+    document.getElementById('victory-run-gold').innerHTML = `${this.runGold} <span class="svg-inline-coin" style="display:inline-flex;vertical-align:middle;margin-left:4px;">${coinSvg}</span>`;
 
     modal.classList.remove('hidden');
   }
@@ -841,17 +891,17 @@ class Game {
     const config = this.currentStageConfig;
     const ctx = this.ctx;
 
-    // 1. Pozadí a mřížka odpovídající stage
+    // 1. Pozadí a fantasy kamenné dláždění odpovídající aktuální stage
     ctx.fillStyle = config.bgColor;
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Mřížka mapy pohybující se s kamerou
+    // Mřížka mapy pohybující se s kamerou - středověké spáry kamenné dlažby
     const gridSize = 80;
     const offsetX = -this.camera.x % gridSize;
     const offsetY = -this.camera.y % gridSize;
 
     ctx.strokeStyle = config.gridColor;
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let x = offsetX; x < this.canvas.width; x += gridSize) {
       ctx.moveTo(x, 0);
@@ -862,6 +912,16 @@ class Game {
       ctx.lineTo(this.canvas.width, y);
     }
     ctx.stroke();
+
+    // Jemné akcentové kachle na křižovatkách spár pro hloubku a fantasy atmosféru
+    ctx.fillStyle = config.accentColor || '#ffffff';
+    ctx.globalAlpha = 0.08;
+    for (let x = offsetX; x < this.canvas.width; x += gridSize) {
+      for (let y = offsetY; y < this.canvas.height; y += gridSize) {
+        ctx.fillRect(x - 2, y - 2, 4, 4);
+      }
+    }
+    ctx.globalAlpha = 1.0;
 
     // 2. XP Krystaly a Mince (Gold Drops)
     for (let i = 0; i < this.xpGems.length; i++) {
@@ -1005,11 +1065,12 @@ class Game {
 
   // Definice permanentních vylepšení v obchodě
   getShopDefinitions() {
+    const svg = (key) => (window.getSvg ? window.getSvg(key) : '');
     return [
       {
         id: 'maxHp',
         name: 'Dračí Vitalita',
-        icon: '❤️',
+        icon: svg('heart'),
         desc: '+15 základních Max HP pro každou budoucí hru.',
         maxLevel: 10,
         costPerLevel: (lvl) => 15 + lvl * 15
@@ -1017,7 +1078,7 @@ class Game {
       {
         id: 'movespeed',
         name: 'Rychlé Boty',
-        icon: '👟',
+        icon: svg('boots'),
         desc: '+6% permanentní rychlost pohybu postavy.',
         maxLevel: 10,
         costPerLevel: (lvl) => 20 + lvl * 20
@@ -1025,7 +1086,7 @@ class Game {
       {
         id: 'damage',
         name: 'Surová Síla',
-        icon: '⚔️',
+        icon: svg('sword'),
         desc: '+10% trvalý nárůst poškození pro všechny zbraně.',
         maxLevel: 10,
         costPerLevel: (lvl) => 25 + lvl * 25
@@ -1033,7 +1094,7 @@ class Game {
       {
         id: 'xpMultiplier',
         name: 'Moudrost Prastarých',
-        icon: '📖',
+        icon: svg('book'),
         desc: '+12% bonus k veškerým sebraným XP krystalům.',
         maxLevel: 10,
         costPerLevel: (lvl) => 30 + lvl * 25
@@ -1041,7 +1102,7 @@ class Game {
       {
         id: 'range',
         name: 'Ostrý Zrak',
-        icon: '🎯',
+        icon: svg('bow'),
         desc: '+8% trvalý dosah zaměřování a střelby.',
         maxLevel: 8,
         costPerLevel: (lvl) => 20 + lvl * 20
@@ -1073,6 +1134,8 @@ class Game {
     const shopItems = this.getShopDefinitions();
     this.updateStatsUI();
 
+    const coinSvg = window.getSvg ? window.getSvg('coin') : '';
+
     shopItems.forEach((item) => {
       const currentLevel = this.metaUpgrades[item.id] || 0;
       const isMaxed = currentLevel >= item.maxLevel;
@@ -1087,7 +1150,7 @@ class Game {
         <div class="shop-item-desc">${item.desc}</div>
         <div class="shop-item-level">Úroveň: ${currentLevel} / ${item.maxLevel}</div>
         <button class="shop-buy-btn" ${(!canAfford || isMaxed) ? 'disabled' : ''}>
-          ${isMaxed ? 'MAXIMA' : `Koupit za ${nextCost} 🪙`}
+          ${isMaxed ? 'MAXIMA' : `Koupit za ${nextCost} <span class="svg-inline-coin" style="display:inline-flex;vertical-align:middle;margin-left:4px;">${coinSvg}</span>`}
         </button>
       `;
 

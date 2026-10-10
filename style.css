@@ -1,3 +1,44 @@
+/* ==========================================================================
+   Crimson Horde: Survivors - Středověký Fantasy UI & Grafický Vzhled
+   ========================================================================== */
+
+:root {
+  /* Barevná paleta - Středověké dřevo, kámen, pergamen a zlato */
+  --bg-deep: #0a0806;
+  --bg-stone: #14110e;
+  --bg-wood: #1e1610;
+  --wood-light: #2c2016;
+
+  /* Pergamen a inkoust */
+  --parchment-light: #f7eedb;
+  --parchment-base: #ebd9b8;
+  --parchment-dark: #d4bf96;
+  --ink-primary: #1c130b;
+  --ink-secondary: #4a3828;
+  --ink-muted: #735c43;
+
+  /* Zlato a akcenty */
+  --gold-bright: #fde047;
+  --gold-main: #d4af37;
+  --gold-dark: #9a7b1c;
+  --gold-border: #b8860b;
+  --gold-glow: rgba(212, 175, 55, 0.45);
+
+  /* Bojové barvy */
+  --crimson-bright: #ef4444;
+  --crimson-main: #991b1b;
+  --crimson-dark: #580c10;
+  --mana-cyan: #0284c7;
+  --mana-light: #38bdf8;
+  --emerald-green: #15803d;
+
+  /* Typografie */
+  --font-title: 'Uncial Antiqua', 'MedievalSharp', cursive, serif;
+  --font-heading: 'MedievalSharp', cursive, serif;
+  --font-body: 'Crimson Text', Georgia, serif;
+  --font-stats: 'Cinzel', 'Rajdhani', serif;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -8,13 +49,14 @@
 }
 
 body {
-  background-color: #0b0b10;
-  color: #e2e8f0;
-  font-family: 'Rajdhani', sans-serif;
+  background-color: var(--bg-deep);
+  color: var(--parchment-base);
+  font-family: var(--font-body);
+  font-size: 16px;
   overflow: hidden;
   width: 100vw;
   height: 100vh;
-  height: 100dvh; /* Dynamic viewport height pro mobilní prohlížeče */
+  height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -27,7 +69,7 @@ body {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: #0d0e15;
+  background: radial-gradient(circle at center, #18120c 0%, #0a0705 100%);
 }
 
 /* Plátno */
@@ -40,43 +82,48 @@ body {
   display: block;
 }
 
-/* XP Bar navrchu */
+/* ==========================================================================
+   Horní XP Lišta (Magická mana ve zlaté intarzii)
+   ========================================================================== */
 #xp-bar-container {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 24px;
-  background: rgba(15, 23, 42, 0.85);
-  border-bottom: 2px solid #38bdf8;
-  z-index: 10;
-  box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+  height: 22px;
+  background: linear-gradient(180deg, #120e0a, #1f1710);
+  border-bottom: 2px solid var(--gold-border);
+  z-index: 15;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), 0 0 12px var(--gold-glow);
 }
 
 #xp-bar-fill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, #0284c7, #38bdf8, #7dd3fc);
-  box-shadow: 0 0 12px #38bdf8;
+  background: linear-gradient(90deg, #0369a1, #0ea5e9, #7dd3fc);
+  box-shadow: 0 0 10px #38bdf8;
   transition: width 0.15s ease-out;
 }
 
 #xp-text {
   position: absolute;
-  top: 2px;
+  top: 1px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 14px;
+  font-family: var(--font-stats);
+  font-size: 13px;
   font-weight: 700;
   color: #fff;
-  text-shadow: 1px 1px 3px #000;
+  text-shadow: 1px 1px 3px #000, 0 0 6px rgba(56, 189, 248, 0.8);
   letter-spacing: 1px;
 }
 
-/* Horní HUD */
+/* ==========================================================================
+   Horní HUD (Středověká vyřezávaná lišta se zlatými sponami)
+   ========================================================================== */
 #hud {
   position: absolute;
-  top: 28px;
+  top: 24px;
   left: 0;
   width: 100%;
   padding: 8px 24px;
@@ -90,72 +137,100 @@ body {
 .hud-left, .hud-right, .hud-center {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   pointer-events: auto;
 }
 
+/* Středověké odznaky statistik */
 .stat-badge {
-  background: rgba(15, 18, 30, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 6px 14px;
-  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(30, 22, 16, 0.92), rgba(16, 12, 9, 0.95));
+  border: 1px solid var(--gold-border);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.8), 0 4px 10px rgba(0, 0, 0, 0.7);
+  padding: 5px 12px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 18px;
+  font-family: var(--font-stats);
+  font-size: 16px;
   font-weight: 700;
+  color: var(--parchment-base);
   backdrop-filter: blur(4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.stat-badge .icon,
+.stat-badge .svg-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
 }
 
 .hp-badge {
-  border-color: rgba(239, 68, 68, 0.4);
+  border-color: #7f1d1d;
+  background: linear-gradient(180deg, rgba(40, 15, 15, 0.92), rgba(20, 8, 8, 0.95));
+}
+
+.hp-badge .svg-heart {
+  color: var(--crimson-bright);
 }
 
 .hp-bar-outer {
-  width: 140px;
-  height: 14px;
-  background: #2a1015;
-  border-radius: 7px;
+  width: 130px;
+  height: 12px;
+  background: #1a080a;
+  border-radius: 6px;
   overflow: hidden;
   border: 1px solid #7f1d1d;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 #hp-bar-fill {
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, #dc2626, #ef4444);
-  box-shadow: 0 0 8px #ef4444;
+  background: linear-gradient(90deg, #991b1b, #ef4444);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
   transition: width 0.1s linear;
+}
+
+.gold-badge {
+  border-color: var(--gold-border);
+  color: var(--gold-bright);
+  text-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
 }
 
 .stage-badge {
   text-align: center;
-  background: rgba(20, 15, 35, 0.85);
-  border: 1px solid #a855f7;
-  padding: 6px 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
-  font-size: 18px;
+  background: linear-gradient(180deg, rgba(32, 20, 42, 0.92), rgba(18, 10, 26, 0.96));
+  border: 1px solid var(--gold-border);
+  padding: 5px 18px;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.25), inset 0 0 8px rgba(0, 0, 0, 0.6);
+  font-family: var(--font-heading);
+  font-size: 16px;
   font-weight: 700;
+  color: var(--gold-bright);
 }
 
 #stage-name {
+  font-family: var(--font-body);
   font-size: 13px;
-  color: #c084fc;
-  text-transform: uppercase;
+  color: var(--parchment-base);
   letter-spacing: 1px;
 }
 
 .timer-badge {
-  background: rgba(15, 18, 30, 0.85);
-  border: 1px solid #eab308;
-  padding: 6px 16px;
-  border-radius: 8px;
-  font-size: 20px;
+  background: linear-gradient(180deg, rgba(30, 22, 16, 0.92), rgba(16, 12, 9, 0.95));
+  border: 1px solid var(--gold-border);
+  padding: 5px 14px;
+  border-radius: 6px;
+  font-family: var(--font-stats);
+  font-size: 17px;
   font-weight: 700;
-  color: #fef08a;
-  box-shadow: 0 0 10px rgba(234, 179, 8, 0.25);
+  color: var(--gold-bright);
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .active-buffs {
@@ -164,245 +239,320 @@ body {
 }
 
 .buff-mini-tag {
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
+  background: rgba(30, 22, 16, 0.88);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 5px;
   padding: 2px 6px;
-  font-size: 13px;
+  font-size: 12px;
   display: flex;
   align-items: center;
   gap: 4px;
+  color: var(--parchment-light);
+}
+
+.buff-mini-tag svg {
+  width: 14px;
+  height: 14px;
 }
 
 .icon-btn {
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid #475569;
-  color: #fff;
-  border-radius: 8px;
-  padding: 6px 10px;
+  background: linear-gradient(180deg, #2b2016, #17110c);
+  border: 1px solid var(--gold-border);
+  color: var(--parchment-base);
+  border-radius: 6px;
+  padding: 5px 9px;
   cursor: pointer;
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
   transition: all 0.2s;
 }
 
 .icon-btn:hover {
-  background: #334155;
-  border-color: #94a3b8;
+  background: linear-gradient(180deg, #3d2f21, #231a12);
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 10px var(--gold-glow);
+  color: #fff;
 }
 
-/* Modály */
+/* ==========================================================================
+   Modální okna - Středověký pergamen & Kované rámy
+   ========================================================================== */
 .modal {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(8, 6, 5, 0.85);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 100;
-  backdrop-filter: blur(6px);
-  transition: opacity 0.2s ease;
+  backdrop-filter: blur(8px);
+  transition: opacity 0.25s ease;
 }
 
 .modal.hidden {
   display: none;
 }
 
+/* Pergamenová deska se zlatým rámováním */
 .modal-card {
-  background: linear-gradient(145deg, #181926, #0e101a);
-  border: 2px solid #4f46e5;
-  border-radius: 16px;
-  padding: 32px;
-  max-width: 820px;
+  background: radial-gradient(ellipse at center, #231b14 0%, #15100c 80%, #0d0907 100%);
+  border: 2px solid var(--gold-border);
+  outline: 1px solid rgba(212, 175, 55, 0.25);
+  outline-offset: 4px;
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 840px;
   width: 90%;
   text-align: center;
-  box-shadow: 0 0 35px rgba(99, 102, 241, 0.4), inset 0 0 15px rgba(255,255,255,0.05);
+  box-shadow: 0 0 45px rgba(0, 0, 0, 0.95), 0 0 25px var(--gold-glow), inset 0 0 20px rgba(0, 0, 0, 0.8);
   animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
 }
 
 @keyframes popIn {
-  from { transform: scale(0.85); opacity: 0; }
+  from { transform: scale(0.92); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
 
+/* Rohové středověké ornamenty */
+.modal-card::before, .modal-card::after {
+  content: "⚜";
+  position: absolute;
+  font-size: 18px;
+  color: var(--gold-main);
+  text-shadow: 0 0 6px var(--gold-glow);
+  pointer-events: none;
+}
+.modal-card::before { top: 6px; left: 10px; }
+.modal-card::after { top: 6px; right: 10px; }
+
 .glow-text {
-  color: #a5b4fc;
-  text-shadow: 0 0 15px #6366f1;
+  font-family: var(--font-title);
+  color: var(--gold-bright);
+  text-shadow: 0 0 15px var(--gold-glow), 2px 2px 4px #000;
   font-size: 32px;
   margin-bottom: 8px;
+  letter-spacing: 1.5px;
 }
 
 .glow-gold {
-  color: #fde047;
-  text-shadow: 0 0 20px #eab308;
+  font-family: var(--font-title);
+  color: var(--gold-bright);
+  text-shadow: 0 0 20px rgba(245, 158, 11, 0.6), 2px 2px 4px #000;
   font-size: 34px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  letter-spacing: 2px;
 }
 
 .subtitle {
-  color: #94a3b8;
-  font-size: 17px;
-  margin-bottom: 24px;
+  font-family: var(--font-body);
+  color: var(--parchment-dark);
+  font-size: 18px;
+  font-style: italic;
+  margin-bottom: 22px;
 }
 
-/* Mřížka pro 3 karty výběru buffu */
+/* ==========================================================================
+   Level-Up Výběr Karet (Středověké iluminované taroty)
+   ========================================================================== */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 18px;
 }
 
 .upgrade-card {
-  background: linear-gradient(180deg, #1e1b4b, #0f172a);
-  border: 2px solid #6366f1;
-  border-radius: 14px;
-  padding: 20px 16px;
+  background: linear-gradient(180deg, #261c14 0%, #140e0a 100%);
+  border: 2px solid var(--gold-border);
+  border-radius: 10px;
+  padding: 20px 14px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.8), inset 0 0 12px rgba(0, 0, 0, 0.6);
   position: relative;
   overflow: hidden;
 }
 
 .upgrade-card:hover {
-  transform: translateY(-8px) scale(1.03);
-  border-color: #38bdf8;
-  box-shadow: 0 10px 25px rgba(56, 189, 248, 0.4);
+  transform: translateY(-6px) scale(1.02);
+  border-color: var(--gold-bright);
+  box-shadow: 0 10px 25px var(--gold-glow), inset 0 0 8px rgba(212, 175, 55, 0.3);
 }
 
 .upgrade-card.rarity-common {
-  border-color: #475569;
+  border-color: #856a47;
 }
 .upgrade-card.rarity-rare {
-  border-color: #38bdf8;
-  box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+  border-color: #0284c7;
+  box-shadow: 0 0 14px rgba(2, 132, 199, 0.35);
 }
 .upgrade-card.rarity-epic {
   border-color: #a855f7;
-  box-shadow: 0 0 20px rgba(168, 85, 247, 0.35);
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.45);
 }
 .upgrade-card.rarity-legendary {
   border-color: #f59e0b;
-  box-shadow: 0 0 25px rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.6);
 }
 
 .card-icon {
-  font-size: 46px;
+  width: 52px;
+  height: 52px;
   margin-bottom: 12px;
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.8));
+}
+
+.card-icon svg {
+  width: 40px;
+  height: 40px;
 }
 
 .card-title {
-  font-size: 20px;
+  font-family: var(--font-heading);
+  font-size: 19px;
   font-weight: 700;
-  color: #fff;
-  margin-bottom: 6px;
+  color: var(--gold-bright);
+  margin-bottom: 4px;
 }
 
 .card-tier {
-  font-size: 12px;
+  font-family: var(--font-stats);
+  font-size: 11px;
   text-transform: uppercase;
-  color: #38bdf8;
+  color: var(--parchment-dark);
   letter-spacing: 1.5px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .card-desc {
+  font-family: var(--font-body);
   font-size: 15px;
-  color: #cbd5e1;
+  color: var(--parchment-base);
   line-height: 1.4;
   margin-bottom: 14px;
   flex-grow: 1;
 }
 
 .card-level-tag {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 13px;
-  color: #a5b4fc;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--gold-border);
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-family: var(--font-stats);
+  font-size: 12px;
+  color: var(--gold-bright);
 }
 
-/* Tlačítka */
+/* ==========================================================================
+   Tlačítka (Kované mosazné pláty s pečetí)
+   ========================================================================== */
 .action-btn {
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  border: none;
-  color: #fff;
-  font-size: 20px;
+  background: linear-gradient(180deg, #991b1b, #6b0c10);
+  border: 2px solid var(--gold-border);
+  color: var(--gold-bright);
+  font-size: 19px;
   font-weight: 700;
-  font-family: inherit;
-  padding: 14px 36px;
-  border-radius: 10px;
+  font-family: var(--font-heading);
+  padding: 12px 34px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7), 0 0 12px rgba(153, 27, 27, 0.4);
+  letter-spacing: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(180deg, #b91c1c, #7f1015);
+  border-color: var(--gold-bright);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 20px var(--gold-glow);
+  color: #fff;
+}
+
+.restart-secondary-btn {
+  background: linear-gradient(180deg, #2b2016, #16100b);
+  border-color: var(--gold-dark);
+  color: var(--parchment-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.restart-secondary-btn:hover {
+  background: linear-gradient(180deg, #3d2f21, #241a12);
+  border-color: var(--gold-bright);
+  box-shadow: 0 4px 16px var(--gold-glow);
 }
 
 .pause-card {
-  border-color: #38bdf8;
-  box-shadow: 0 0 35px rgba(56, 189, 248, 0.35);
-  max-width: 520px;
+  max-width: 500px;
 }
 
 .pause-actions {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-top: 10px;
+  gap: 14px;
+  margin-top: 14px;
 }
 
-.restart-secondary-btn {
-  background: linear-gradient(135deg, #dc2626, #991b1b);
-  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
-}
-
-.restart-secondary-btn:hover {
-  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.7);
-}
-
-.action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 22px rgba(99, 102, 241, 0.7);
-}
-
-/* Smrt & Vítězství */
+/* ==========================================================================
+   Úmrtí & Vítězství
+   ========================================================================== */
 .death-card {
-  border-color: #dc2626;
-  box-shadow: 0 0 40px rgba(220, 38, 38, 0.45);
+  border-color: #991b1b;
+  box-shadow: 0 0 45px rgba(153, 27, 27, 0.5), inset 0 0 20px rgba(0, 0, 0, 0.9);
 }
 
 .death-title {
+  font-family: var(--font-title);
   color: #ef4444;
-  text-shadow: 0 0 20px #dc2626;
-  font-size: 38px;
-  margin-bottom: 20px;
+  text-shadow: 0 0 20px rgba(220, 38, 38, 0.8), 2px 2px 4px #000;
+  font-size: 36px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 }
 
 .death-stats {
-  background: rgba(15, 23, 42, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 16px 24px;
-  margin: 20px 0 28px 0;
+  background: rgba(14, 10, 7, 0.88);
+  border: 1px solid var(--gold-dark);
+  border-radius: 8px;
+  padding: 18px 24px;
+  margin: 18px 0 24px 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   text-align: left;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
 }
 
 .death-stat-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-body);
   font-size: 18px;
-  color: #94a3b8;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
-  padding-bottom: 8px;
+  color: var(--parchment-dark);
+  border-bottom: 1px dashed rgba(212, 175, 55, 0.15);
+  padding-bottom: 6px;
 }
 
 .death-stat-row:last-child {
@@ -411,68 +561,301 @@ body {
 }
 
 .highlight-val {
-  color: #f8fafc;
-  font-size: 22px;
+  font-family: var(--font-stats);
+  color: var(--gold-bright);
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-#final-survival-time, #victory-time {
-  color: #fde047;
-  font-size: 24px;
+.death-actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .victory-card {
-  border-color: #f59e0b;
-  box-shadow: 0 0 50px rgba(245, 158, 11, 0.5);
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 55px rgba(245, 158, 11, 0.6), inset 0 0 20px rgba(0, 0, 0, 0.9);
 }
 
-/* Úvodní okno */
+/* ==========================================================================
+   Úvodní Okno & Lifetime Statistiky (Středověká Zbrojnice & Kronika)
+   ========================================================================== */
+.start-card {
+  max-width: 860px;
+}
+
 .game-logo {
-  font-size: 42px;
-  color: #f43f5e;
-  text-shadow: 0 0 25px #be123c;
-  margin-bottom: 6px;
+  font-family: var(--font-title);
+  font-size: 40px;
+  color: var(--gold-bright);
+  text-shadow: 0 0 25px var(--gold-glow), 2px 2px 4px #000;
+  margin-bottom: 4px;
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 .flavor-text {
-  color: #94a3b8;
+  font-family: var(--font-body);
+  color: var(--parchment-dark);
   font-size: 18px;
-  margin-bottom: 24px;
+  font-style: italic;
+  margin-bottom: 20px;
+}
+
+.stats-overview-box {
+  background: linear-gradient(180deg, rgba(22, 16, 11, 0.95), rgba(13, 9, 6, 0.98));
+  border: 1px solid var(--gold-border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8), 0 0 15px rgba(212, 175, 55, 0.15);
+}
+
+.stats-header {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold-bright);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.stat-card {
+  background: rgba(36, 26, 18, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.stat-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--parchment-dark);
+  line-height: 1.2;
+}
+
+.stat-value {
+  font-family: var(--font-stats);
+  font-size: 17px;
+  color: var(--gold-bright);
+  font-weight: 700;
 }
 
 .instructions-box {
-  background: rgba(15, 23, 42, 0.7);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 18px;
-  margin-bottom: 28px;
+  background: rgba(14, 10, 7, 0.85);
+  border-radius: 8px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  padding: 14px 18px;
+  margin-bottom: 22px;
   text-align: left;
-  line-height: 1.8;
+  line-height: 1.7;
+  font-family: var(--font-body);
   font-size: 16px;
+  color: var(--parchment-base);
 }
 
 kbd {
-  background: #334155;
-  border: 1px solid #64748b;
+  background: #2a1f16;
+  border: 1px solid var(--gold-dark);
   border-radius: 4px;
-  padding: 2px 8px;
-  font-family: monospace;
-  font-size: 14px;
-  color: #38bdf8;
-  box-shadow: 0 2px 0 #1e293b;
+  padding: 1px 7px;
+  font-family: var(--font-stats);
+  font-size: 13px;
+  color: var(--gold-bright);
+  box-shadow: 0 2px 0 #120d09;
+}
+
+.start-actions-row {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .start-btn {
-  font-size: 22px;
-  padding: 16px 48px;
-  background: linear-gradient(135deg, #e11d48, #9f1239);
-  box-shadow: 0 4px 20px rgba(225, 29, 72, 0.5);
+  font-size: 21px;
+  padding: 14px 44px;
 }
 
-.start-btn:hover {
-  box-shadow: 0 6px 28px rgba(225, 29, 72, 0.8);
+.shop-btn {
+  font-size: 21px;
+  padding: 14px 38px;
+  background: linear-gradient(180deg, #d97706, #92400e);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7), 0 0 15px rgba(217, 119, 6, 0.4);
 }
 
-/* Virtuální joystick pro dotyková zařízení */
+.shop-btn:hover {
+  background: linear-gradient(180deg, #f59e0b, #b45309);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 22px var(--gold-glow);
+}
+
+/* ==========================================================================
+   Síň Hrdinů - Obchod s Permanentními Upgrady
+   ========================================================================== */
+.shop-card {
+  max-width: 900px;
+}
+
+.shop-gold-display {
+  background: linear-gradient(180deg, #221810, #130e09);
+  border: 1px solid var(--gold-border);
+  border-radius: 8px;
+  padding: 8px 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-heading);
+  font-size: 18px;
+  color: var(--parchment-light);
+  margin-bottom: 20px;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.2), inset 0 0 10px rgba(0, 0, 0, 0.6);
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+  max-height: 52vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.shop-item-card {
+  background: linear-gradient(180deg, #241b13 0%, #150f0b 100%);
+  border: 2px solid var(--gold-border);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(0, 0, 0, 0.6);
+}
+
+.shop-item-card.maxed {
+  border-color: #10b981;
+  opacity: 0.9;
+}
+
+.shop-item-icon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shop-item-icon svg {
+  width: 38px;
+  height: 38px;
+}
+
+.shop-item-title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gold-bright);
+  margin-bottom: 4px;
+}
+
+.shop-item-desc {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--parchment-dark);
+  margin-bottom: 10px;
+  line-height: 1.35;
+}
+
+.shop-item-level {
+  font-family: var(--font-stats);
+  font-size: 12px;
+  color: var(--gold-bright);
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  padding: 2px 10px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.shop-buy-btn {
+  background: linear-gradient(180deg, #d97706, #92400e);
+  border: 1px solid var(--gold-border);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.shop-buy-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #f59e0b, #b45309);
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 12px var(--gold-glow);
+}
+
+.shop-buy-btn:disabled {
+  background: #201a14;
+  border-color: #453625;
+  color: #6b553d;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.shop-actions {
+  display: flex;
+  justify-content: center;
+}
+
+/* ==========================================================================
+   Virtuální Joystick (Kovaný kov & bronzový medailon)
+   ========================================================================== */
 #joystick-zone {
   position: absolute;
   bottom: 30px;
@@ -493,9 +876,9 @@ kbd {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(30, 41, 59, 0.45) 0%, rgba(15, 23, 42, 0.65) 100%);
-  border: 2px solid rgba(56, 189, 248, 0.4);
-  box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+  background: radial-gradient(circle, rgba(40, 30, 20, 0.5) 0%, rgba(15, 11, 8, 0.75) 100%);
+  border: 2px solid var(--gold-border);
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(0, 0, 0, 0.9);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -503,43 +886,42 @@ kbd {
 
 #joystick-thumb {
   position: absolute;
-  width: 54px;
-  height: 54px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: radial-gradient(circle, #38bdf8 10%, #0284c7 90%);
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+  background: radial-gradient(circle, #d97706 10%, #78350f 90%);
+  border: 2px solid var(--gold-bright);
+  box-shadow: 0 0 12px var(--gold-glow), inset 0 1px 3px rgba(255, 255, 255, 0.4);
   pointer-events: none;
   transform: translate(0px, 0px);
   transition: transform 0.05s ease-out;
 }
 
-/* =========================================
-   Mobilní & Tablet Responzivní Přizpůsobení
-   ========================================= */
-
+/* ==========================================================================
+   Responzivita pro Mobily a Menší Obrazovky
+   ========================================================================== */
 @media (max-width: 768px) {
   #hud {
     padding: 6px 12px;
-    top: 26px;
+    top: 24px;
     flex-wrap: wrap;
     gap: 8px;
   }
 
   .stat-badge {
-    padding: 4px 8px;
-    font-size: 14px;
-    gap: 6px;
+    padding: 3px 8px;
+    font-size: 13px;
+    gap: 4px;
   }
 
   .hp-bar-outer {
-    width: 80px;
+    width: 75px;
     height: 10px;
   }
 
   .stage-badge {
-    padding: 4px 10px;
-    font-size: 14px;
+    padding: 3px 8px;
+    font-size: 13px;
   }
 
   #stage-name {
@@ -547,16 +929,10 @@ kbd {
   }
 
   .timer-badge {
-    padding: 4px 10px;
-    font-size: 15px;
-  }
-
-  .icon-btn {
-    padding: 6px 8px;
+    padding: 3px 8px;
     font-size: 14px;
   }
 
-  /* Level up výběr na výšku nebo ve scrollu */
   .modal-card {
     padding: 18px 14px;
     max-height: 90vh;
@@ -569,18 +945,17 @@ kbd {
     font-size: 24px;
   }
 
-  .subtitle {
-    font-size: 14px;
-    margin-bottom: 14px;
+  .game-logo {
+    font-size: 26px;
   }
 
   .cards-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
   }
 
   .upgrade-card {
-    padding: 12px 14px;
+    padding: 10px 12px;
     flex-direction: row;
     text-align: left;
     align-items: center;
@@ -588,267 +963,19 @@ kbd {
   }
 
   .card-icon {
-    font-size: 34px;
+    width: 40px;
+    height: 40px;
     margin-bottom: 0;
-  }
-
-  .upgrade-card > div:not(.card-icon) {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .card-title {
-    font-size: 16px;
-    margin-bottom: 2px;
-  }
-
-  .card-tier {
-    margin-bottom: 4px;
-    font-size: 11px;
-  }
-
-  .card-desc {
-    font-size: 13px;
-    margin-bottom: 6px;
-  }
-
-  .card-level-tag {
-    align-self: flex-start;
-    padding: 2px 8px;
-    font-size: 11px;
   }
 
   .action-btn {
     font-size: 16px;
-    padding: 12px 24px;
+    padding: 10px 20px;
     width: 100%;
   }
 
-  #joystick-zone {
-    bottom: 20px;
-    left: 20px;
-    width: 120px;
-    height: 120px;
-  }
-
-  #joystick-thumb {
-    width: 48px;
-    height: 48px;
-  }
-
-  .death-stats {
-    padding: 12px 14px;
-    font-size: 15px;
-  }
-
-  .highlight-val {
-    font-size: 17px;
-  }
-
-  .game-logo {
-    font-size: 28px;
-  }
-
-  .instructions-box {
-    font-size: 13px;
-    padding: 12px;
-    line-height: 1.6;
+  .start-actions-row {
+    flex-direction: column;
+    gap: 10px;
   }
 }
-
-/* =========================================
-   Nové styly pro Zlato, Lifetime statistiky & Obchod
-   ========================================= */
-
-.gold-badge {
-  border-color: rgba(245, 158, 11, 0.45);
-  color: #fbbf24;
-  text-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
-}
-
-.start-card {
-  max-width: 860px;
-}
-
-.stats-overview-box {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 20px;
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
-}
-
-.stats-header {
-  font-size: 16px;
-  font-weight: 700;
-  color: #fde047;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  margin-bottom: 12px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
-  gap: 10px;
-}
-
-.stat-card {
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 8px 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-align: left;
-}
-
-.stat-icon {
-  font-size: 24px;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-label {
-  font-size: 11px;
-  color: #94a3b8;
-  line-height: 1.2;
-}
-
-.stat-value {
-  font-size: 16px;
-  color: #38bdf8;
-  font-weight: 700;
-}
-
-.start-actions-row {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.shop-btn {
-  font-size: 22px;
-  padding: 16px 36px;
-  background: linear-gradient(135deg, #d97706, #b45309);
-  box-shadow: 0 4px 20px rgba(217, 119, 6, 0.45);
-}
-
-.shop-btn:hover {
-  box-shadow: 0 6px 28px rgba(217, 119, 6, 0.75);
-}
-
-/* Obchod Modal */
-.shop-card {
-  max-width: 900px;
-  border-color: #f59e0b;
-  box-shadow: 0 0 40px rgba(245, 158, 11, 0.35);
-}
-
-.shop-gold-display {
-  background: rgba(20, 15, 35, 0.85);
-  border: 1px solid #f59e0b;
-  border-radius: 10px;
-  padding: 10px 20px;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 20px;
-  margin-bottom: 24px;
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
-}
-
-.shop-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-  max-height: 52vh;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-.shop-item-card {
-  background: linear-gradient(180deg, #1e1b4b, #0f172a);
-  border: 2px solid #6366f1;
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
-  position: relative;
-}
-
-.shop-item-card.maxed {
-  border-color: #10b981;
-  opacity: 0.85;
-}
-
-.shop-item-icon {
-  font-size: 38px;
-  margin-bottom: 8px;
-}
-
-.shop-item-title {
-  font-size: 19px;
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 4px;
-}
-
-.shop-item-desc {
-  font-size: 13px;
-  color: #94a3b8;
-  margin-bottom: 10px;
-  line-height: 1.3;
-}
-
-.shop-item-level {
-  font-size: 12px;
-  color: #a5b4fc;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 2px 8px;
-  border-radius: 10px;
-  margin-bottom: 12px;
-}
-
-.shop-buy-btn {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  border: none;
-  color: #fff;
-  font-family: inherit;
-  font-weight: 700;
-  font-size: 15px;
-  padding: 8px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.4);
-  width: 100%;
-}
-
-.shop-buy-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.7);
-}
-
-.shop-buy-btn:disabled {
-  background: #334155;
-  color: #64748b;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.shop-actions {
-  display: flex;
-  justify-content: center;
-}
-

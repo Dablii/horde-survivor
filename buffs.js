@@ -4,7 +4,8 @@ const BUFF_DEFINITIONS = [
   {
     id: 'movespeed',
     name: 'Bleskový Krok',
-    icon: '👟',
+    iconKey: 'boots',
+    get icon() { return window.getSvg ? window.getSvg('boots') : ''; },
     tier: 'Pohyblivost',
     rarity: 'common',
     description: 'Zvyšuje rychlost pohybu o +20%. Snadnější únik před monstry.',
@@ -16,7 +17,8 @@ const BUFF_DEFINITIONS = [
   {
     id: 'firerate',
     name: 'Rychlopalba',
-    icon: '⚡',
+    iconKey: 'lightning',
+    get icon() { return window.getSvg ? window.getSvg('lightning') : ''; },
     tier: 'Rychlost útoku',
     rarity: 'rare',
     description: 'Zkracuje interval mezi střelami o 18%. Střílíš znatelně častěji.',
@@ -28,7 +30,8 @@ const BUFF_DEFINITIONS = [
   {
     id: 'range',
     name: 'Dalekonosný Pohled',
-    icon: '🎯',
+    iconKey: 'bow',
+    get icon() { return window.getSvg ? window.getSvg('bow') : ''; },
     tier: 'Dostřel',
     rarity: 'common',
     description: 'Zvyšuje dosah střelby a detekce nepřátel o +30%.',
@@ -40,7 +43,8 @@ const BUFF_DEFINITIONS = [
   {
     id: 'multishot',
     name: 'Rozptyl Střel',
-    icon: '🏹',
+    iconKey: 'bow',
+    get icon() { return window.getSvg ? window.getSvg('bow') : ''; },
     tier: 'Projektily',
     rarity: 'epic',
     description: 'Přidává +1 dodatečný projektil k hlavní salvě.',
@@ -52,7 +56,8 @@ const BUFF_DEFINITIONS = [
   {
     id: 'damage',
     name: 'Krvavé Ostří',
-    icon: '⚔️',
+    iconKey: 'sword',
+    get icon() { return window.getSvg ? window.getSvg('sword') : ''; },
     tier: 'Poškození',
     rarity: 'common',
     description: 'Zvyšuje veškeré poškození zbraní o +25%.',
@@ -64,7 +69,8 @@ const BUFF_DEFINITIONS = [
   {
     id: 'splash',
     name: 'Výbušná Munice',
-    icon: '💥',
+    iconKey: 'explosion',
+    get icon() { return window.getSvg ? window.getSvg('explosion') : ''; },
     tier: 'Plošné poškození',
     rarity: 'epic',
     description: 'Projektily po zásahu explodují s plošným zraněním (+40px rádius).',
@@ -77,7 +83,8 @@ const BUFF_DEFINITIONS = [
   {
     id: 'pierce',
     name: 'Průrazné Střely',
-    icon: '🔱',
+    iconKey: 'sword',
+    get icon() { return window.getSvg ? window.getSvg('sword') : ''; },
     tier: 'Penetrace',
     rarity: 'rare',
     description: 'Projektily proletí skrze +1 dalšího nepřítele.',
@@ -89,7 +96,8 @@ const BUFF_DEFINITIONS = [
   {
     id: 'orbiter',
     name: 'Rotující Čepele',
-    icon: '🌀',
+    iconKey: 'orbit',
+    get icon() { return window.getSvg ? window.getSvg('orbit') : ''; },
     tier: 'Obranná zbraň',
     rarity: 'legendary',
     description: 'Aura létajících magických čepelí kolem tebe sekající nepřátele.',
@@ -102,7 +110,8 @@ const BUFF_DEFINITIONS = [
   {
     id: 'lightning',
     name: 'Řetězový Blesk',
-    icon: '🌩️',
+    iconKey: 'lightning',
+    get icon() { return window.getSvg ? window.getSvg('lightning') : ''; },
     tier: 'Magický útok',
     rarity: 'epic',
     description: 'Pravidelně sešle blesk do náhodného nepřítele, který přeskočí na další.',
@@ -115,7 +124,8 @@ const BUFF_DEFINITIONS = [
   {
     id: 'magnet',
     name: 'Magnet na Duše',
-    icon: '🧲',
+    iconKey: 'magnet',
+    get icon() { return window.getSvg ? window.getSvg('magnet') : ''; },
     tier: 'Užitek',
     rarity: 'common',
     description: 'Zvyšuje dosah sběru XP drahokamů o +50%.',
@@ -127,7 +137,8 @@ const BUFF_DEFINITIONS = [
   {
     id: 'regen',
     name: 'Regenerace Života',
-    icon: '💖',
+    iconKey: 'potion',
+    get icon() { return window.getSvg ? window.getSvg('potion') : ''; },
     tier: 'Přežití',
     rarity: 'rare',
     description: 'Obnovuje +1.5 HP za sekundu a okamžitě vyléčí 30 HP.',
@@ -140,7 +151,8 @@ const BUFF_DEFINITIONS = [
   {
     id: 'maxhp',
     name: 'Železná Vůle',
-    icon: '🛡️',
+    iconKey: 'shield',
+    get icon() { return window.getSvg ? window.getSvg('shield') : ''; },
     tier: 'Maximální HP',
     rarity: 'common',
     description: 'Zvyšuje maximální životy o +30 a plně tě vyléčí na tuto hodnotu.',
@@ -177,8 +189,9 @@ class BuffManager {
       return [
         {
           id: 'bonus_heal',
-          name: 'Záchranná Lékárnička',
-          icon: '🍷',
+          name: 'Lektvar Obnovy',
+          iconKey: 'potion',
+          get icon() { return window.getSvg ? window.getSvg('potion') : ''; },
           tier: 'Okamžitý efekt',
           rarity: 'rare',
           description: 'Obnoví 50 HP tvému hrdinovi.',
@@ -188,7 +201,8 @@ class BuffManager {
         {
           id: 'bonus_overcharge',
           name: 'Přetížení Zbraní',
-          icon: '🔥',
+          iconKey: 'sword',
+          get icon() { return window.getSvg ? window.getSvg('sword') : ''; },
           tier: 'Permanentní posílení',
           rarity: 'epic',
           description: 'Trvale zvýší poškození o dalších +15%.',
@@ -213,4 +227,5 @@ class BuffManager {
   }
 }
 
+window.BUFF_DEFINITIONS = BUFF_DEFINITIONS;
 window.buffManager = new BuffManager();
