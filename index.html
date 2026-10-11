@@ -11,6 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Crimson Horde">
   <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
 
@@ -97,8 +98,17 @@
           <strong class="highlight-val"><span id="shop-gold-amount">0</span> <svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg></strong>
         </div>
 
+        <div class="shop-tabs">
+          <button id="tab-upgrades" class="shop-tab active">Trvalá Vylepšení</button>
+          <button id="tab-skins" class="shop-tab">Skiny Hrdiny</button>
+        </div>
+
         <div id="shop-items-container" class="shop-grid">
           <!-- Položky obchodu se dynamicky vygenerují sem -->
+        </div>
+
+        <div id="shop-skins-container" class="shop-grid hidden">
+          <!-- Skiny hrdiny se dynamicky vygenerují sem -->
         </div>
 
         <div class="shop-actions">

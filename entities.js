@@ -52,6 +52,19 @@ class Player {
     this.moving = false;
     this.invulnTimer = 0;
     this.walkAnimTime = 0;
+    this.skin = 'default';
+  }
+
+  setSkin(skinId) {
+    this.skin = skinId || 'default';
+  }
+
+  getOrbitalRadius() {
+    return 60 + (this.orbitalsCount * 8);
+  }
+
+  getOrbitalBladeSize() {
+    return 1 + (this.orbitalsCount - 1) * 0.18;
   }
 
   get speed() {
@@ -140,7 +153,7 @@ class Player {
     }
   }
 
-  // 2D Top-Down středověký hrdina: Zelená tunika, kožený opasek, meč a rytířský štít
+  // 2D Top-Down středověký hrdina: Vykreslování podle vybraného skinu (default, mage, archer, paladin, dark_knight)
   draw(ctx, camera) {
     const screenX = this.x - camera.x;
     const screenY = this.y - camera.y;
@@ -152,6 +165,31 @@ class Player {
 
     ctx.save();
     ctx.translate(screenX, screenY);
+
+    // 0. TEMNÁ PULZUJÍCÍ AURA (Pouze pro skin Dark Knight)
+    if (this.skin === 'dark_knight') {
+      const auraPulse = Math.sin(this.walkAnimTime * 2.5) * 5;
+      const auraGrad = ctx.createRadialGradient(0, 0, 8, 0, 0, 32 + auraPulse);
+      auraGrad.addColorStop(0, 'rgba(220, 38, 38, 0.55)');
+      auraGrad.addColorStop(0.5, 'rgba(127, 29, 29, 0.4)');
+      auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = auraGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, 32 + auraPulse, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Šlehající runové plaménky a jiskry
+      for (let a = 0; a < 4; a++) {
+        const ang = this.walkAnimTime * 2.2 + (a * Math.PI / 2);
+        const ax = Math.cos(ang) * (22 + a * 2.5);
+        const ay = Math.sin(ang) * (16 + a * 2.5);
+        ctx.fillStyle = (a % 2 === 0) ? '#ef4444' : '#991b1b';
+        ctx.beginPath();
+        ctx.arc(ax, ay, 2.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
     ctx.scale(this.facing, 1);
 
     const bob = this.moving ? Math.sin(this.walkAnimTime) * 2.2 : 0;
@@ -163,144 +201,430 @@ class Player {
     ctx.ellipse(0, 16, 17, 8, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 2. Kožené boty / nohy
-    ctx.fillStyle = '#451a03';
-    // Levá noha
-    ctx.fillRect(-8, 8 + legSwing, 6, 8);
-    // Pravá noha
-    ctx.fillRect(2, 8 - legSwing, 6, 8);
+    // Vykreslení podle aktivního skinu
+    if (this.skin === 'mage') {
+      // ===== ARCIMÁG (Fialovo-modrá róba, magická hůl, kouzelná kniha) =====
+      // Boty
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(-8, 8 + legSwing, 6, 8);
+      ctx.fillRect(2, 8 - legSwing, 6, 8);
 
-    // 3. Vlající plášť za zády (Tmavě lesní zeleň s karmínovou podšívkou)
-    ctx.fillStyle = '#14532d';
-    ctx.beginPath();
-    ctx.moveTo(-10, -6 + bob);
-    ctx.lineTo(-18, 14 + bob);
-    ctx.lineTo(2, 14 + bob);
-    ctx.closePath();
-    ctx.fill();
+      // Vlající magický plášť
+      ctx.fillStyle = '#312e81';
+      ctx.beginPath();
+      ctx.moveTo(-10, -6 + bob);
+      ctx.lineTo(-20, 16 + bob);
+      ctx.lineTo(4, 16 + bob);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#4338ca';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
 
-    ctx.strokeStyle = '#166534';
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
+      // Tělo - Háv mága
+      ctx.fillStyle = '#4f46e5';
+      ctx.beginPath();
+      ctx.arc(0, 0 + bob, 13, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2;
+      ctx.stroke();
 
-    // 4. Tělo - Zelená dobrodruhova tunika / kazajka
-    ctx.fillStyle = '#22c55e';
-    ctx.beginPath();
-    ctx.arc(0, 0 + bob, 13, 0, Math.PI * 2);
-    ctx.fill();
+      // Pás mága se zlatou runou
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(-12, 1 + bob, 24, 4);
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(0, 3 + bob, 3, 0, Math.PI * 2);
+      ctx.fill();
 
-    // Zlaté lemování tuniky
-    ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+      // Hlava & Kapuce
+      ctx.fillStyle = '#312e81';
+      ctx.beginPath();
+      ctx.arc(0, -9 + bob, 8.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
 
-    // Kožený pásek s mosaznou sponou
-    ctx.fillStyle = '#78350f';
-    ctx.fillRect(-12, 1 + bob, 24, 4);
-    ctx.fillStyle = '#f59e0b';
-    ctx.fillRect(-3, 0 + bob, 6, 6);
+      // Zářící oči pod kapucí
+      ctx.fillStyle = '#09090b';
+      ctx.fillRect(0, -11 + bob, 7, 5);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(2, -10 + bob, 2.5, 2.5);
+      ctx.fillRect(5, -10 + bob, 2.5, 2.5);
 
-    // Ocelové nárameníky (Pauldrons)
-    ctx.fillStyle = '#94a3b8';
-    ctx.beginPath();
-    ctx.arc(-8, -4 + bob, 5, 0, Math.PI * 2);
-    ctx.arc(8, -4 + bob, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#e2e8f0';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+      // Levá ruka: Magický Grimoár
+      ctx.save();
+      ctx.translate(-11, 2 + bob);
+      ctx.fillStyle = '#831843';
+      ctx.fillRect(-5, -7, 9, 13);
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(-5, -7, 9, 13);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(-2, -3, 3, 5);
+      ctx.restore();
 
-    // 5. Hlava & Rytířská přilbice (Bascinet s chocholem)
-    ctx.fillStyle = '#cbd5e1';
-    ctx.beginPath();
-    ctx.arc(0, -9 + bob, 7.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#64748b';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+      // Pravá ruka: Kouzelnická Hůl s pulzujícím krystalem
+      ctx.save();
+      ctx.translate(12, 2 + bob);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(-1.5, -18, 3, 26);
+      ctx.shadowColor = '#818cf8';
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = '#c084fc';
+      ctx.beginPath();
+      ctx.arc(0, -21, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(-1, -22, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
 
-    // Zlatý průzor helmy
-    ctx.fillStyle = '#d97706';
-    ctx.fillRect(1, -11 + bob, 6, 3);
-    ctx.fillStyle = '#38bdf8'; // Světlo očí / vizoru
-    ctx.fillRect(3, -11 + bob, 3, 2);
+    } else if (this.skin === 'archer') {
+      // ===== HRANIČÁŘ (Lovecká zeleň, kůže, toulec, luk) =====
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(-8, 8 + legSwing, 6, 8);
+      ctx.fillRect(2, 8 - legSwing, 6, 8);
 
-    // Péřový chochol (Červeno-zlatý)
-    ctx.fillStyle = '#dc2626';
-    ctx.beginPath();
-    ctx.moveTo(-2, -16 + bob);
-    ctx.lineTo(-8, -21 + bob);
-    ctx.lineTo(1, -17 + bob);
-    ctx.fill();
+      // Lesní maskovací plášť
+      ctx.fillStyle = '#166534';
+      ctx.beginPath();
+      ctx.moveTo(-10, -6 + bob);
+      ctx.lineTo(-18, 14 + bob);
+      ctx.lineTo(2, 14 + bob);
+      ctx.closePath();
+      ctx.fill();
 
-    // 6. Rytířský štít (Heater Shield na levé ruce)
-    ctx.save();
-    ctx.translate(-11, 2 + bob);
-    // Tvar klasického středověkého štítu
-    ctx.fillStyle = '#1e3a8a';
-    ctx.beginPath();
-    ctx.moveTo(-5, -10);
-    ctx.lineTo(5, -10);
-    ctx.lineTo(5, 4);
-    ctx.lineTo(0, 11);
-    ctx.lineTo(-5, 4);
-    ctx.closePath();
-    ctx.fill();
+      // Kožená kamizola
+      ctx.fillStyle = '#92400e';
+      ctx.beginPath();
+      ctx.arc(0, 0 + bob, 13, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 2;
+      ctx.stroke();
 
-    // Zlatý heraldický lem štítu
-    ctx.strokeStyle = '#f59e0b';
-    ctx.lineWidth = 1.8;
-    ctx.stroke();
+      // Toulec se šípy na zádech
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(-14, -12 + bob, 5, 16);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(-15, -15 + bob, 2, 4);
+      ctx.fillRect(-12, -16 + bob, 2, 5);
 
-    // Zlatý heraldický kříž uprostřed štítu
-    ctx.fillStyle = '#fbbf24';
-    ctx.fillRect(-1.5, -7, 3, 14);
-    ctx.fillRect(-4, -4, 8, 3);
+      // Klobouk s peřím
+      ctx.fillStyle = '#15803d';
+      ctx.beginPath();
+      ctx.arc(0, -9 + bob, 7.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(-2, -15 + bob);
+      ctx.lineTo(-8, -21 + bob);
+      ctx.lineTo(1, -16 + bob);
+      ctx.fill();
+
+      // Luk v ruce
+      ctx.save();
+      ctx.translate(11, 2 + bob);
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(2, 0, 14, -Math.PI / 2.3, Math.PI / 2.3);
+      ctx.stroke();
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(8, -12);
+      ctx.lineTo(8, 12);
+      ctx.stroke();
+      ctx.restore();
+
+    } else if (this.skin === 'paladin') {
+      // ===== ZLATÝ RYTÍŘ (Zářivé zlaté pláty, bílý plášť, křídlatá helma) =====
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(-8, 8 + legSwing, 6, 8);
+      ctx.fillRect(2, 8 - legSwing, 6, 8);
+
+      // Bílý královský plášť se zlatou obrubou
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(-10, -6 + bob);
+      ctx.lineTo(-19, 15 + bob);
+      ctx.lineTo(3, 15 + bob);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      // Zlatý kyrys
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(0, 0 + bob, 13, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Zlaté nárameníky
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.arc(-9, -4 + bob, 6, 0, Math.PI * 2);
+      ctx.arc(9, -4 + bob, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Zlatá přilbice s modrým hledím
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.arc(0, -9 + bob, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(1, -11 + bob, 6, 2.5);
+
+      // Křídla helmy
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.moveTo(-3, -15 + bob);
+      ctx.lineTo(-10, -22 + bob);
+      ctx.lineTo(1, -17 + bob);
+      ctx.fill();
+
+      // Sluneční štít
+      ctx.save();
+      ctx.translate(-11, 2 + bob);
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.arc(0, 0, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fef08a';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-2, -5, 4, 10);
+      ctx.fillRect(-5, -2, 10, 4);
+      ctx.restore();
+
+      // Zlatý meč
+      ctx.save();
+      ctx.translate(11, 2 + bob);
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.moveTo(-2.5, 6);
+      ctx.lineTo(0, -20);
+      ctx.lineTo(2.5, 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.restore();
+
+    } else if (this.skin === 'dark_knight') {
+      // ===== TEMNÝ RYTÍŘ (Obsidiánová zbroj, krvavý plášť, rohatá přilba, démonický meč) =====
+      ctx.fillStyle = '#18181b';
+      ctx.fillRect(-8, 8 + legSwing, 6, 8);
+      ctx.fillRect(2, 8 - legSwing, 6, 8);
+
+      // Potrhaný krvavě rudý plášť
+      ctx.fillStyle = '#991b1b';
+      ctx.beginPath();
+      ctx.moveTo(-10, -6 + bob);
+      ctx.lineTo(-20, 16 + bob);
+      ctx.lineTo(4, 15 + bob);
+      ctx.closePath();
+      ctx.fill();
+
+      // Obsidiánový plátový kyrys
+      ctx.fillStyle = '#27272a';
+      ctx.beginPath();
+      ctx.arc(0, 0 + bob, 13, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      // Ostnaté nárameníky
+      ctx.fillStyle = '#09090b';
+      ctx.beginPath();
+      ctx.arc(-9, -4 + bob, 6, 0, Math.PI * 2);
+      ctx.arc(9, -4 + bob, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Rohatá přilba temnoty
+      ctx.fillStyle = '#18181b';
+      ctx.beginPath();
+      ctx.arc(0, -9 + bob, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#09090b';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Démonicky žhnoucí rudé oči
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(1, -11 + bob, 3, 2.5);
+      ctx.fillRect(5, -11 + bob, 3, 2.5);
+
+      // Zakroucené rohy
+      ctx.fillStyle = '#09090b';
+      ctx.beginPath();
+      ctx.moveTo(-4, -14 + bob);
+      ctx.lineTo(-12, -22 + bob);
+      ctx.lineTo(-2, -17 + bob);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(2, -14 + bob);
+      ctx.lineTo(8, -21 + bob);
+      ctx.lineTo(4, -16 + bob);
+      ctx.fill();
+
+      // Štít s hroty
+      ctx.save();
+      ctx.translate(-11, 2 + bob);
+      ctx.fillStyle = '#18181b';
+      ctx.fillRect(-6, -7, 10, 14);
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-6, -7, 10, 14);
+      ctx.restore();
+
+      // Temný krvavý meč
+      ctx.save();
+      ctx.translate(11, 2 + bob);
+      ctx.shadowColor = '#dc2626';
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = '#09090b';
+      ctx.beginPath();
+      ctx.moveTo(-3, 6);
+      ctx.lineTo(0, -21);
+      ctx.lineTo(3, 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.restore();
+
+    } else {
+      // ===== ZÁKLADNÍ HRDINA (Zelená tunika, bascinet přilba, meč & štít) =====
+      // 2. Kožené boty / nohy
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(-8, 8 + legSwing, 6, 8);
+      ctx.fillRect(2, 8 - legSwing, 6, 8);
+
+      // 3. Vlající plášť za zády (Tmavě lesní zeleň)
+      ctx.fillStyle = '#14532d';
+      ctx.beginPath();
+      ctx.moveTo(-10, -6 + bob);
+      ctx.lineTo(-18, 14 + bob);
+      ctx.lineTo(2, 14 + bob);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#166534';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // 4. Tělo - Zelená tunika
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.arc(0, 0 + bob, 13, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#d4af37';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Kožený pásek
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(-12, 1 + bob, 24, 4);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(-3, 0 + bob, 6, 6);
+
+      // Nárameníky
+      ctx.fillStyle = '#94a3b8';
+      ctx.beginPath();
+      ctx.arc(-8, -4 + bob, 5, 0, Math.PI * 2);
+      ctx.arc(8, -4 + bob, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // 5. Hlava & Rytířská přilbice
+      ctx.fillStyle = '#cbd5e1';
+      ctx.beginPath();
+      ctx.arc(0, -9 + bob, 7.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Průzor helmy
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(1, -11 + bob, 6, 3);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(3, -11 + bob, 3, 2);
+
+      // Péřový chochol
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.moveTo(-2, -16 + bob);
+      ctx.lineTo(-8, -21 + bob);
+      ctx.lineTo(1, -17 + bob);
+      ctx.fill();
+
+      // 6. Rytířský štít
+      ctx.save();
+      ctx.translate(-11, 2 + bob);
+      ctx.fillStyle = '#1e3a8a';
+      ctx.beginPath();
+      ctx.moveTo(-5, -10);
+      ctx.lineTo(5, -10);
+      ctx.lineTo(5, 4);
+      ctx.lineTo(0, 11);
+      ctx.lineTo(-5, 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(-1.5, -7, 3, 14);
+      ctx.fillRect(-4, -4, 8, 3);
+      ctx.restore();
+
+      // 7. Ocelový meč
+      ctx.save();
+      ctx.translate(11, 2 + bob);
+      ctx.rotate(0.3 + (this.moving ? Math.sin(this.walkAnimTime * 2) * 0.15 : 0));
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(-1.5, 8, 3, 5);
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(0, 13, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(-6, 6, 12, 2.5);
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(-3, 6);
+      ctx.lineTo(0, -18);
+      ctx.lineTo(3, 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+    }
+
     ctx.restore();
 
-    // 7. Ocelový meč (V pravé ruce směřující vpřed)
-    ctx.save();
-    ctx.translate(11, 2 + bob);
-    ctx.rotate(0.3 + (this.moving ? Math.sin(this.walkAnimTime * 2) * 0.15 : 0));
-
-    // Jílec & Hruška
-    ctx.fillStyle = '#b45309';
-    ctx.fillRect(-1.5, 8, 3, 5); // rukojeť
-    ctx.fillStyle = '#fbbf24';
-    ctx.beginPath();
-    ctx.arc(0, 13, 2.5, 0, Math.PI * 2); // pommel
-    ctx.fill();
-
-    // Záštita meče
-    ctx.fillStyle = '#f59e0b';
-    ctx.fillRect(-6, 6, 12, 2.5);
-
-    // Čepel (Leštěná ocel se stříbrným ostřím)
-    ctx.fillStyle = '#f8fafc';
-    ctx.beginPath();
-    ctx.moveTo(-3, 6);
-    ctx.lineTo(0, -18);
-    ctx.lineTo(3, 6);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#94a3b8';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // Středové žebro čepele
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, 5);
-    ctx.lineTo(0, -15);
-    ctx.stroke();
-    ctx.restore();
-
-    ctx.restore();
-
-    // 8. Rotující magické čepele (Orbitals)
+    // 8. Rotující magické čepele (Orbitals) - dynamický dosah i velikost podle úrovně
     if (this.hasOrbitals && this.orbitalsCount > 0) {
-      const radius = 65;
+      const radius = this.getOrbitalRadius();
+      const bladeScale = this.getOrbitalBladeSize();
       const count = this.orbitalsCount;
       for (let i = 0; i < count; i++) {
         const angle = this.orbitalAngle + (i * (Math.PI * 2 / count));
@@ -310,6 +634,7 @@ class Player {
         ctx.save();
         ctx.translate(ox, oy);
         ctx.rotate(angle + Math.PI / 2);
+        ctx.scale(bladeScale, bladeScale);
 
         // Zářící magická čepel
         ctx.shadowColor = '#38bdf8';
@@ -517,9 +842,9 @@ class Enemy {
       case 'hell_hound':
         this.name = 'Pekelný Pes';
         this.radius = 16;
-        this.hp = 70;
-        this.speed = 3.4;
-        this.damage = 22;
+        this.hp = 65;
+        this.speed = 2.7;
+        this.damage = 18;
         this.color = '#dc2626';
         this.xpValue = 8;
         break;
@@ -850,6 +1175,7 @@ class BossEnemy extends Enemy {
   constructor(x, y, bossKey, stageNumber) {
     super(x, y, 'boss', stageNumber);
     this.bossKey = bossKey;
+    this.stageNumber = stageNumber;
     this.isBoss = true;
     this.radius = 34;
     this.hp = (400 + stageNumber * 280) * this.stageMult;
@@ -862,7 +1188,7 @@ class BossEnemy extends Enemy {
     // Boss útoky a telegrafování
     this.attackCooldown = 3.5;
     this.telegraphTimer = 0;
-    this.telegraphDuration = 1.1; // 1.1s varovná zóna
+    this.telegraphDuration = 1.15; // 1.15s varovná zóna
     this.attackMode = 'aimed_spread';
     this.telegraphTarget = null;
 
@@ -898,12 +1224,14 @@ class BossEnemy extends Enemy {
       this.telegraphTimer -= dt;
 
       if (this.telegraphTimer <= 0 && spawnEnemyProjectile) {
+        const projDmg = Math.round(this.damage * 0.85);
+
         if (this.attackMode === 'aimed_spread' && this.telegraphTarget) {
+          // Vějířový útok: úhly střel přesně odpovídají telegrafovanému výseči
           const aimAngle = Math.atan2(this.telegraphTarget.y - this.y, this.telegraphTarget.x - this.x);
-          const shots = 5;
-          const spread = 0.35;
+          const shots = 5 + (this.stageNumber >= 6 ? 2 : 0);
+          const spread = 0.30;
           const projSpeed = 6.2;
-          const projDmg = Math.round(this.damage * 0.85);
 
           for (let i = 0; i < shots; i++) {
             const angle = aimAngle + (i - (shots - 1) / 2) * spread;
@@ -912,10 +1240,11 @@ class BossEnemy extends Enemy {
             spawnEnemyProjectile(new EnemyProjectile(this.x, this.y, vx, vy, projDmg, 9, '#ef4444'));
           }
           if (window.sound && window.sound.enemyShoot) window.sound.enemyShoot();
+
         } else if (this.attackMode === 'ring') {
-          const count = 10;
-          const projSpeed = 5.0;
-          const projDmg = Math.round(this.damage * 0.75);
+          // Kruhová salva projektilů
+          const count = 12;
+          const projSpeed = 5.2;
 
           for (let i = 0; i < count; i++) {
             const angle = (i * Math.PI * 2) / count;
@@ -924,15 +1253,77 @@ class BossEnemy extends Enemy {
             spawnEnemyProjectile(new EnemyProjectile(this.x, this.y, vx, vy, projDmg, 8, '#f97316'));
           }
           if (window.sound && window.sound.enemyShoot) window.sound.enemyShoot();
+
+        } else if (this.attackMode === 'cross_explosion') {
+          // Křížová exploze: projektily vystřelené do 8 směrů (kardinální + diagonální osy)
+          const axes = [
+            0, Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4,
+            Math.PI, 5 * Math.PI / 4, 3 * Math.PI / 2, 7 * Math.PI / 4
+          ];
+          const projSpeed = 6.8;
+
+          axes.forEach((ang) => {
+            const vx = Math.cos(ang) * projSpeed;
+            const vy = Math.sin(ang) * projSpeed;
+            spawnEnemyProjectile(new EnemyProjectile(this.x, this.y, vx, vy, projDmg, 9, '#dc2626'));
+          });
+          if (window.sound && window.sound.enemyShoot) window.sound.enemyShoot();
+
+        } else if (this.attackMode === 'spiral') {
+          // Spirálové střílení: vířivý závoj projektilů
+          const count = 16;
+          const projSpeed = 5.8;
+          const offset = this.animTime;
+
+          for (let i = 0; i < count; i++) {
+            const angle = offset + (i * Math.PI * 2) / count;
+            const vx = Math.cos(angle) * projSpeed;
+            const vy = Math.sin(angle) * projSpeed;
+            spawnEnemyProjectile(new EnemyProjectile(this.x, this.y, vx, vy, projDmg, 8, '#a855f7'));
+          }
+          if (window.sound && window.sound.enemyShoot) window.sound.enemyShoot();
+
+        } else if (this.attackMode === 'shrinking_zone' && this.telegraphTarget) {
+          // Plošná zóna: detonace v cílovém místě se shrapnely do všech stran
+          const blastX = this.telegraphTarget.x;
+          const blastY = this.telegraphTarget.y;
+          const count = 10;
+          const projSpeed = 5.0;
+
+          for (let i = 0; i < count; i++) {
+            const angle = (i * Math.PI * 2) / count;
+            const vx = Math.cos(angle) * projSpeed;
+            const vy = Math.sin(angle) * projSpeed;
+            spawnEnemyProjectile(new EnemyProjectile(blastX, blastY, vx, vy, projDmg, 8, '#ef4444'));
+          }
+
+          // Přímé zranění, pokud hráč zůstal v oblasti dopadu
+          const pDist = Math.hypot(player.x - blastX, player.y - blastY);
+          if (pDist <= 85) {
+            player.takeDamage(Math.round(this.damage * 0.9));
+          }
+
+          if (window.particleSystem) {
+            window.particleSystem.spawnExplosion(blastX, blastY, '#ef4444', 35);
+          }
+          if (window.sound && window.sound.enemyShoot) window.sound.enemyShoot();
         }
+
         this.telegraphTarget = null;
       }
     } else {
       this.attackCooldown -= dt;
       if (this.attackCooldown <= 0) {
-        this.attackCooldown = 3.8 + Math.random() * 1.5;
+        this.attackCooldown = 3.6 + Math.random() * 1.4;
         this.telegraphTimer = this.telegraphDuration;
-        this.attackMode = Math.random() < 0.6 ? 'aimed_spread' : 'ring';
+
+        // Volba komplexního vzorce podle dosažené stage
+        const availableModes = ['aimed_spread', 'ring'];
+        if (this.stageNumber >= 4) availableModes.push('cross_explosion');
+        if (this.stageNumber >= 7) availableModes.push('spiral');
+        if (this.stageNumber >= 9) availableModes.push('shrinking_zone');
+
+        this.attackMode = availableModes[Math.floor(Math.random() * availableModes.length)];
         this.telegraphTarget = { x: player.x, y: player.y };
       }
     }
@@ -949,31 +1340,34 @@ class BossEnemy extends Enemy {
     const screenX = this.x - camera.x;
     const screenY = this.y - camera.y;
 
-    // 1. ZÁŘÍCÍ RUNOVÉ TELEGRAFOVÁNÍ ÚTOKU (Vysoký kontrast proti tmě i trávě)
+    // 1. ZÁŘÍCÍ RUNOVÉ TELEGRAFOVÁNÍ ÚTOKU (Vysoký kontrast proti tmě i aréně)
     if (this.telegraphTimer > 0) {
       const progress = 1 - (this.telegraphTimer / this.telegraphDuration);
 
       ctx.save();
       if (this.attackMode === 'aimed_spread' && this.telegraphTarget) {
+        // Vějířový útok: Matematicky přesný kužel odpovídající trajektoriím
         const targetScreenX = this.telegraphTarget.x - camera.x;
         const targetScreenY = this.telegraphTarget.y - camera.y;
         const aimAngle = Math.atan2(this.telegraphTarget.y - this.y, this.telegraphTarget.x - this.x);
 
-        // Zářící rudý kužel zkázy
+        const shots = 5 + (this.stageNumber >= 6 ? 2 : 0);
+        const spread = 0.30;
+        const fanHalfAngle = ((shots - 1) / 2) * spread + 0.08;
+        const beamLen = 350;
+
         ctx.fillStyle = `rgba(239, 68, 68, ${0.25 + progress * 0.45})`;
-        ctx.strokeStyle = `rgba(255, 30, 30, ${0.8 + progress * 0.2})`;
+        ctx.strokeStyle = `rgba(255, 30, 30, ${0.85 + progress * 0.15})`;
         ctx.lineWidth = 3;
 
         ctx.beginPath();
         ctx.moveTo(screenX, screenY);
-        const arcSpread = 0.48;
-        const beamLen = 340;
-        ctx.arc(screenX, screenY, beamLen, aimAngle - arcSpread, aimAngle + arcSpread);
+        ctx.arc(screenX, screenY, beamLen, aimAngle - fanHalfAngle, aimAngle + fanHalfAngle);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
 
-        // Zaměřovací terč na hráče s pulzujícími runami
+        // Zaměřovací terč na hráče
         ctx.strokeStyle = `rgba(255, 230, 0, ${0.7 + progress * 0.3})`;
         ctx.lineWidth = 2.5;
         ctx.beginPath();
@@ -986,9 +1380,10 @@ class BossEnemy extends Enemy {
         ctx.moveTo(targetScreenX, targetScreenY - 12);
         ctx.lineTo(targetScreenX, targetScreenY + 12);
         ctx.stroke();
+
       } else if (this.attackMode === 'ring') {
         // Expanzivní runový kruh okolo bosse
-        const ringR = 170 * progress;
+        const ringR = 175 * progress;
         ctx.fillStyle = `rgba(249, 115, 22, ${0.2 + progress * 0.35})`;
         ctx.strokeStyle = `rgba(255, 50, 50, ${0.85 + progress * 0.15})`;
         ctx.lineWidth = 3.5;
@@ -1003,6 +1398,66 @@ class BossEnemy extends Enemy {
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(screenX, screenY, ringR * 0.7, 0, Math.PI * 2);
+        ctx.stroke();
+
+      } else if (this.attackMode === 'cross_explosion') {
+        // Křížové varovné koridory
+        const corridorLen = 420;
+        const width = 24;
+        ctx.fillStyle = `rgba(220, 38, 38, ${0.25 + progress * 0.45})`;
+        ctx.strokeStyle = `rgba(255, 20, 20, ${0.85 + progress * 0.15})`;
+        ctx.lineWidth = 2;
+
+        const angles = [0, Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4];
+        angles.forEach((ang) => {
+          ctx.save();
+          ctx.translate(screenX, screenY);
+          ctx.rotate(ang);
+          ctx.fillRect(-corridorLen, -width / 2, corridorLen * 2, width);
+          ctx.strokeRect(-corridorLen, -width / 2, corridorLen * 2, width);
+          ctx.restore();
+        });
+
+      } else if (this.attackMode === 'spiral') {
+        // Spirálový vír energie
+        const count = 5;
+        ctx.strokeStyle = `rgba(168, 85, 247, ${0.4 + progress * 0.55})`;
+        ctx.lineWidth = 3;
+
+        for (let s = 0; s < count; s++) {
+          const startAngle = this.animTime * 2 + (s * (Math.PI * 2 / count));
+          ctx.beginPath();
+          for (let r = 20; r < 200; r += 15) {
+            const a = startAngle + (r * 0.03);
+            const px = screenX + Math.cos(a) * r;
+            const py = screenY + Math.sin(a) * r;
+            if (r === 20) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+
+      } else if (this.attackMode === 'shrinking_zone' && this.telegraphTarget) {
+        // Zmenšující se varovná zóna: Cílový kruh a stahující se prstenec
+        const targetScreenX = this.telegraphTarget.x - camera.x;
+        const targetScreenY = this.telegraphTarget.y - camera.y;
+        const zoneRadius = 85;
+        const shrinkingRadius = zoneRadius + (1 - progress) * 80;
+
+        // Cílová dopadová zóna
+        ctx.fillStyle = `rgba(239, 68, 68, ${0.2 + progress * 0.35})`;
+        ctx.strokeStyle = `rgba(255, 30, 30, 0.8)`;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(targetScreenX, targetScreenY, zoneRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Zmenšující se kruh indikující okamžik detonace
+        ctx.strokeStyle = `rgba(254, 240, 138, ${0.8 + progress * 0.2})`;
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.arc(targetScreenX, targetScreenY, shrinkingRadius, 0, Math.PI * 2);
         ctx.stroke();
       }
       ctx.restore();
@@ -1265,6 +1720,345 @@ class GoldCoin {
   }
 }
 
+// Třída pro překážky v aréně (stromy, balvany, pařezy, pilíře, voda / láva)
+class Obstacle {
+  constructor(x, y, type = 'rock', radius = null) {
+    this.x = x;
+    this.y = y;
+    this.type = type;
+    this.radius = radius || this.getDefaultRadius(type);
+    this.isWater = (type === 'water' || type === 'magma_pool');
+    this.seed = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+    this.rotation = Math.abs(this.seed) % (Math.PI * 2);
+    this.animTime = Math.abs(this.seed) % 10;
+  }
+
+  getDefaultRadius(type) {
+    switch (type) {
+      case 'water':
+      case 'magma_pool':
+        return 42;
+      case 'tree':
+      case 'dead_tree':
+        return 22;
+      case 'rock':
+      case 'ice_boulder':
+        return 20;
+      case 'pillar':
+        return 18;
+      case 'stump':
+        return 16;
+      default:
+        return 20;
+    }
+  }
+
+  checkEntityCollision(entity) {
+    const dx = entity.x - this.x;
+    const dy = entity.y - this.y;
+    const dist = Math.hypot(dx, dy);
+    const minDist = this.radius + entity.radius;
+    if (dist < minDist && dist > 0.001) {
+      const overlap = minDist - dist;
+      entity.x += (dx / dist) * overlap;
+      entity.y += (dy / dist) * overlap;
+      return true;
+    }
+    return false;
+  }
+
+  checkProjectileCollision(p) {
+    if (this.isWater) return false; // Projektily volně létají nad vodou a lávou
+    const dist = Math.hypot(p.x - this.x, p.y - this.y);
+    return dist < (this.radius + p.radius);
+  }
+
+  draw(ctx, camera) {
+    const screenX = this.x - camera.x;
+    const screenY = this.y - camera.y;
+
+    if (
+      screenX < -80 || screenX > ctx.canvas.width + 80 ||
+      screenY < -80 || screenY > ctx.canvas.height + 80
+    ) {
+      return;
+    }
+
+    ctx.save();
+    ctx.translate(screenX, screenY);
+
+    switch (this.type) {
+      case 'tree': {
+        // 1. Měkký stín koruny
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.beginPath();
+        ctx.ellipse(8, 12, this.radius * 1.1, this.radius * 0.7, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Kmen uprostřed
+        ctx.fillStyle = '#451a03';
+        ctx.beginPath();
+        ctx.arc(0, 4, 7, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 3. Spodní vrstva koruny (tmavě lesní zelená)
+        ctx.fillStyle = '#14532d';
+        ctx.beginPath();
+        ctx.arc(0, -4, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 4. Střední vrstva koruny (svěží zelená)
+        ctx.fillStyle = '#16a34a';
+        ctx.beginPath();
+        ctx.arc(-2, -6, this.radius * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 5. Vrchní světlá koruna & listoví
+        ctx.fillStyle = '#22c55e';
+        ctx.beginPath();
+        ctx.arc(-4, -9, this.radius * 0.55, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#4ade80';
+        ctx.beginPath();
+        ctx.arc(-5, -11, this.radius * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+
+      case 'dead_tree': {
+        // Mrtvý pokroucený strom
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.beginPath();
+        ctx.ellipse(6, 8, this.radius * 0.9, this.radius * 0.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#27272a';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(0, 8);
+        ctx.lineTo(-4, -8);
+        ctx.lineTo(-14, -18);
+        ctx.moveTo(-4, -8);
+        ctx.lineTo(10, -16);
+        ctx.moveTo(1, -2);
+        ctx.lineTo(12, 2);
+        ctx.moveTo(-3, 0);
+        ctx.lineTo(-12, 4);
+        ctx.stroke();
+
+        ctx.fillStyle = '#1c1917';
+        ctx.beginPath();
+        ctx.arc(0, 2, 6, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+
+      case 'rock': {
+        // Balvan / Kámen s fazetami a stínem
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.beginPath();
+        ctx.ellipse(4, 6, this.radius, this.radius * 0.65, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#334155';
+        ctx.beginPath();
+        ctx.moveTo(-this.radius * 0.9, 2);
+        ctx.lineTo(-this.radius * 0.6, -this.radius * 0.8);
+        ctx.lineTo(this.radius * 0.4, -this.radius * 0.9);
+        ctx.lineTo(this.radius * 0.9, -this.radius * 0.2);
+        ctx.lineTo(this.radius * 0.7, this.radius * 0.7);
+        ctx.lineTo(-this.radius * 0.4, this.radius * 0.8);
+        ctx.closePath();
+        ctx.fill();
+
+        // Světlá nasvícená fazeta
+        ctx.fillStyle = '#64748b';
+        ctx.beginPath();
+        ctx.moveTo(-this.radius * 0.6, -this.radius * 0.8);
+        ctx.lineTo(this.radius * 0.4, -this.radius * 0.9);
+        ctx.lineTo(0, -this.radius * 0.2);
+        ctx.lineTo(-this.radius * 0.5, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        // Mechová skvrna
+        ctx.fillStyle = '#3f6212';
+        ctx.beginPath();
+        ctx.arc(-this.radius * 0.3, this.radius * 0.2, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        break;
+      }
+
+      case 'ice_boulder': {
+        // Mrazivý ledový krystal / balvan
+        ctx.fillStyle = 'rgba(2, 132, 199, 0.25)';
+        ctx.beginPath();
+        ctx.ellipse(4, 6, this.radius, this.radius * 0.65, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#0284c7';
+        ctx.beginPath();
+        ctx.moveTo(0, -this.radius);
+        ctx.lineTo(this.radius * 0.8, -this.radius * 0.3);
+        ctx.lineTo(this.radius * 0.6, this.radius * 0.7);
+        ctx.lineTo(-this.radius * 0.6, this.radius * 0.7);
+        ctx.lineTo(-this.radius * 0.8, -this.radius * 0.3);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#7dd3fc';
+        ctx.beginPath();
+        ctx.moveTo(0, -this.radius);
+        ctx.lineTo(this.radius * 0.5, -this.radius * 0.2);
+        ctx.lineTo(0, this.radius * 0.2);
+        ctx.lineTo(-this.radius * 0.5, -this.radius * 0.2);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(0, -this.radius);
+        ctx.lineTo(this.radius * 0.2, -this.radius * 0.4);
+        ctx.lineTo(-this.radius * 0.2, -this.radius * 0.4);
+        ctx.closePath();
+        ctx.fill();
+        break;
+      }
+
+      case 'pillar': {
+        // Prastarý kamenný sloup / ruina
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.beginPath();
+        ctx.ellipse(4, 8, this.radius, this.radius * 0.6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Pata sloupu
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.arc(0, 4, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Hlavice / tělo
+        ctx.fillStyle = '#475569';
+        ctx.beginPath();
+        ctx.arc(0, -2, this.radius * 0.85, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.beginPath();
+        ctx.arc(0, -6, this.radius * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        break;
+      }
+
+      case 'stump': {
+        // Dřevěný pařez s letokruhy
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.beginPath();
+        ctx.ellipse(3, 5, this.radius, this.radius * 0.65, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#543015';
+        ctx.beginPath();
+        ctx.arc(0, 2, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#a16207';
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius * 0.85, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius * 0.55, 0, Math.PI * 2);
+        ctx.arc(0, 0, this.radius * 0.28, 0, Math.PI * 2);
+        ctx.stroke();
+        break;
+      }
+
+      case 'water': {
+        // Rybník / Voda s jemným vlněním
+        this.animTime += 0.016;
+        const wave = Math.sin(this.animTime * 2) * 2;
+
+        // Břeh
+        ctx.fillStyle = '#14532d';
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius + 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Voda
+        const waterGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, this.radius);
+        waterGrad.addColorStop(0, '#38bdf8');
+        waterGrad.addColorStop(0.7, '#0284c7');
+        waterGrad.addColorStop(1, '#0369a1');
+        ctx.fillStyle = waterGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius + wave, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Odlesk / vlnka
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(-8, -8, 12, 0.3, 1.8);
+        ctx.stroke();
+        break;
+      }
+
+      case 'magma_pool': {
+        // Vroucí lávové jezírko
+        this.animTime += 0.02;
+        const bubble = Math.sin(this.animTime * 3) * 2.5;
+
+        // Vulkanický břeh
+        ctx.fillStyle = '#1c1917';
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius + 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Láva
+        const lavaGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, this.radius);
+        lavaGrad.addColorStop(0, '#fef08a');
+        lavaGrad.addColorStop(0.5, '#ea580c');
+        lavaGrad.addColorStop(1, '#991b1b');
+        ctx.fillStyle = lavaGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius + bubble, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Žhavá bublina
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(-6, -6, 4, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+
+      default: {
+        ctx.fillStyle = '#64748b';
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+    }
+
+    ctx.restore();
+  }
+}
+
 window.Player = Player;
 window.Projectile = Projectile;
 window.EnemyProjectile = EnemyProjectile;
@@ -1272,3 +2066,4 @@ window.Enemy = Enemy;
 window.BossEnemy = BossEnemy;
 window.XPGem = XPGem;
 window.GoldCoin = GoldCoin;
+window.Obstacle = Obstacle;

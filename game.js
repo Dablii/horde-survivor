@@ -55,6 +55,10 @@ class Game {
       xpMultiplier: 0,
       range: 0
     };
+    this.unlockedSkins = ['default'];
+    this.activeSkin = 'default';
+    this.shopTab = 'upgrades';
+    this.obstacles = [];
     this.loadPersistentData();
 
     // Entity
@@ -230,6 +234,20 @@ class Game {
         this.openShopModal();
       });
     }
+
+    // Záložky v obchodě (Vylepšení vs Skiny)
+    const tabUpgrades = document.getElementById('tab-upgrades');
+    if (tabUpgrades) {
+      tabUpgrades.addEventListener('click', () => {
+        this.setShopTab('upgrades');
+      });
+    }
+    const tabSkins = document.getElementById('tab-skins');
+    if (tabSkins) {
+      tabSkins.addEventListener('click', () => {
+        this.setShopTab('skins');
+      });
+    }
   }
 
   setupJoystick() {
@@ -346,6 +364,7 @@ class Game {
 
     this.player = new Player(0, 0);
     this.applyMetaUpgradesToPlayer();
+    this.initStageObstacles();
 
     this.projectiles = [];
     this.enemyProjectiles = [];
@@ -371,6 +390,40 @@ class Game {
     return window.STAGE_CONFIGS[this.currentStageIndex] || window.STAGE_CONFIGS[window.STAGE_CONFIGS.length - 1];
   }
 
+  initStageObstacles() {
+    this.obstacles = [];
+    const config = this.currentStageConfig;
+    if (!config || !config.obstacles || !window.Obstacle) return;
+
+    const { types = ['rock'], count = 28 } = config.obstacles;
+    const mapExtent = 1200;
+    const safeRadius = 140; // Volný prostor kolem spawnu hráče
+
+    let attempts = 0;
+    while (this.obstacles.length < count && attempts < count * 8) {
+      attempts++;
+      const ox = (Math.random() * 2 - 1) * mapExtent;
+      const oy = (Math.random() * 2 - 1) * mapExtent;
+
+      if (Math.hypot(ox, oy) < safeRadius) continue;
+
+      const type = types[Math.floor(Math.random() * types.length)];
+      const tempObs = new window.Obstacle(ox, oy, type);
+
+      let overlapping = false;
+      for (let existing of this.obstacles) {
+        if (Math.hypot(ox - existing.x, oy - existing.y) < (tempObs.radius + existing.radius + 20)) {
+          overlapping = true;
+          break;
+        }
+      }
+
+      if (!overlapping) {
+        this.obstacles.push(tempObs);
+      }
+    }
+  }
+
   gameLoop(timestamp) {
     const dt = Math.min(0.1, (timestamp - this.lastTime) / 1000);
     this.lastTime = timestamp;
@@ -394,6 +447,11 @@ class Game {
     const joyVec = { x: this.joystick.inputX, y: this.joystick.inputY };
     this.player.update(dt, this.keys, joyVec);
 
+    // Kolize hráče s překážkami (stromy, kameny, rybníky blokují pohyb)
+    for (let i = 0; i < this.obstacles.length; i++) {
+      this.obstacles[i].checkEntityCollision(this.player);
+    }
+
     // Aktualizace kamery (sleduje hráče do středu)
     this.camera.x = this.player.x - this.canvas.width / 2;
     this.camera.y = this.player.y - this.canvas.height / 2;
@@ -411,6 +469,15 @@ class Game {
     this.projectiles = this.projectiles.filter((p) => {
       const alive = p.update(dt);
       if (!alive) return false;
+
+      // Kolize střely hráče s pevnými překážkami (nad vodou střely volně létají)
+      for (let i = 0; i < this.obstacles.length; i++) {
+        const obs = this.obstacles[i];
+        if (obs.checkProjectileCollision(p)) {
+          window.particleSystem.spawnExplosion(p.x, p.y, '#94a3b8', 6);
+          return false;
+        }
+      }
 
       // Kolize střely s nepřáteli
       for (let i = 0; i < this.enemies.length; i++) {
@@ -462,6 +529,15 @@ class Game {
       const alive = ep.update(dt);
       if (!alive) return false;
 
+      // Kolize nepřátelského projektilu s pevnými překážkami (poskytují krytí)
+      for (let i = 0; i < this.obstacles.length; i++) {
+        const obs = this.obstacles[i];
+        if (obs.checkProjectileCollision(ep)) {
+          window.particleSystem.spawnExplosion(ep.x, ep.y, ep.color, 6);
+          return false;
+        }
+      }
+
       // Kolize nepřátelského projektilu s hráčem
       const dist = Math.hypot(ep.x - this.player.x, ep.y - this.player.y);
       if (dist <= ep.radius + this.player.radius) {
@@ -482,6 +558,11 @@ class Game {
 
     this.enemies.forEach((enemy) => {
       enemy.update(dt, this.player, spawnEnemyProj);
+
+      // Kolize nepřítele s překážkami
+      for (let i = 0; i < this.obstacles.length; i++) {
+        this.obstacles[i].checkEntityCollision(enemy);
+      }
 
       // Poškození hráče kontaktem
       const dist = Math.hypot(this.player.x - enemy.x, this.player.y - enemy.y);
@@ -572,10 +653,13 @@ class Game {
   }
 
   handleSpecialPassives(dt) {
-    // 1. Orbiting blades sekají nepřátele kolem hráče
+    // 1. Orbiting blades sekají nepřátele kolem hráče (škálování dosahu i velikosti)
     if (this.player.hasOrbitals && this.player.orbitalsCount > 0) {
-      const radius = 65;
+      const radius = this.player.getOrbitalRadius();
+      const bladeScale = this.player.getOrbitalBladeSize();
       const count = this.player.orbitalsCount;
+      const hitReach = 14 * bladeScale;
+
       for (let i = 0; i < count; i++) {
         const angle = this.player.orbitalAngle + (i * (Math.PI * 2 / count));
         const ox = this.player.x + Math.cos(angle) * radius;
@@ -585,7 +669,7 @@ class Game {
         for (let j = 0; j < this.enemies.length; j++) {
           const e = this.enemies[j];
           const dist = Math.hypot(e.x - ox, e.y - oy);
-          if (dist < e.radius + 14) {
+          if (dist < e.radius + hitReach) {
             // Každých pár ticků seknout
             if (e.hitFlash <= 0) {
               const bladeDmg = Math.round(this.player.damage * 0.75);
@@ -801,8 +885,11 @@ class Game {
     this.stageTimer = 0;
     this.bossSpawnedForCurrentStage = false;
 
-    // Částečné vyčištění nepřátel
+    // Částečné vyčištění nepřátel a střel
     this.enemies = [];
+    this.projectiles = [];
+    this.enemyProjectiles = [];
+    this.initStageObstacles(); // Vygenerování nových překážek pro další stage
     this.player.heal(40); // Odměna za postup - uzdravení 40 HP
     this.state = 'playing';
   }
@@ -923,12 +1010,26 @@ class Game {
     }
     ctx.globalAlpha = 1.0;
 
+    // 1.5. Překážky - Rybníky a vodní plochy (vykreslené na terénu před předměty)
+    for (let i = 0; i < this.obstacles.length; i++) {
+      if (this.obstacles[i].isWater) {
+        this.obstacles[i].draw(ctx, this.camera);
+      }
+    }
+
     // 2. XP Krystaly a Mince (Gold Drops)
     for (let i = 0; i < this.xpGems.length; i++) {
       this.xpGems[i].draw(ctx, this.camera);
     }
     for (let i = 0; i < this.goldCoins.length; i++) {
       this.goldCoins[i].draw(ctx, this.camera);
+    }
+
+    // 2.5. Pevné překážky (stromy, kameny, pařezy, pilíře)
+    for (let i = 0; i < this.obstacles.length; i++) {
+      if (!this.obstacles[i].isWater) {
+        this.obstacles[i].draw(ctx, this.camera);
+      }
     }
 
     // 3. Nepřátelé (včetně telegrafovaných červených zón pod nimi/kolem nich)
@@ -971,6 +1072,21 @@ class Game {
       if (savedUpgrades) {
         this.metaUpgrades = Object.assign(this.metaUpgrades, JSON.parse(savedUpgrades));
       }
+
+      const savedSkins = localStorage.getItem('crimson_horde_skins');
+      if (savedSkins) {
+        try {
+          const parsed = JSON.parse(savedSkins);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            this.unlockedSkins = parsed;
+          }
+        } catch (e) {}
+      }
+
+      const savedActiveSkin = localStorage.getItem('crimson_horde_active_skin');
+      if (savedActiveSkin) {
+        this.activeSkin = savedActiveSkin;
+      }
     } catch (e) {
       console.warn('Nepodařilo se načíst data z localStorage:', e);
     }
@@ -981,6 +1097,8 @@ class Game {
       localStorage.setItem('crimson_horde_gold', this.gold.toString());
       localStorage.setItem('crimson_horde_lifetime_stats', JSON.stringify(this.lifetimeStats));
       localStorage.setItem('crimson_horde_meta_upgrades', JSON.stringify(this.metaUpgrades));
+      localStorage.setItem('crimson_horde_skins', JSON.stringify(this.unlockedSkins));
+      localStorage.setItem('crimson_horde_active_skin', this.activeSkin);
     } catch (e) {
       console.warn('Nepodařilo se uložit data do localStorage:', e);
     }
@@ -995,6 +1113,11 @@ class Game {
   }
 
   applyMetaUpgradesToPlayer() {
+    // 0. Aktivní Skin hrdiny
+    if (this.player && this.player.setSkin) {
+      this.player.setSkin(this.activeSkin);
+    }
+
     // 1. Max HP (+15 HP za úroveň)
     const hpLvl = this.metaUpgrades.maxHp || 0;
     this.player.maxHp += hpLvl * 15;
@@ -1113,7 +1236,29 @@ class Game {
   openShopModal() {
     const modal = document.getElementById('shop-modal');
     modal.classList.remove('hidden');
-    this.renderShopItems();
+    this.setShopTab(this.shopTab || 'upgrades');
+  }
+
+  setShopTab(tab) {
+    this.shopTab = tab;
+    const tabUpgrades = document.getElementById('tab-upgrades');
+    const tabSkins = document.getElementById('tab-skins');
+    const itemsCont = document.getElementById('shop-items-container');
+    const skinsCont = document.getElementById('shop-skins-container');
+
+    if (tab === 'skins') {
+      if (tabUpgrades) tabUpgrades.classList.remove('active');
+      if (tabSkins) tabSkins.classList.add('active');
+      if (itemsCont) itemsCont.classList.add('hidden');
+      if (skinsCont) skinsCont.classList.remove('hidden');
+      this.renderShopSkins();
+    } else {
+      if (tabUpgrades) tabUpgrades.classList.add('active');
+      if (tabSkins) tabSkins.classList.remove('active');
+      if (itemsCont) itemsCont.classList.remove('hidden');
+      if (skinsCont) skinsCont.classList.add('hidden');
+      this.renderShopItems();
+    }
   }
 
   closeShopModal() {
@@ -1124,6 +1269,139 @@ class Game {
       document.getElementById('start-modal').classList.remove('hidden');
     }
     this.updateStatsUI();
+  }
+
+  // Definice středověkých skinů hrdiny
+  getSkinDefinitions() {
+    return [
+      {
+        id: 'default',
+        name: 'Základní Hrdina',
+        cost: 0,
+        desc: 'Udatný dobrodruh v zelené tunice s přilbicí bascinet, mečem a rytířským štítem.',
+        previewColor: '#22c55e',
+        badge: 'Základní'
+      },
+      {
+        id: 'mage',
+        name: 'Arcimág',
+        cost: 100,
+        desc: 'Mistr tajemných umění v nočním hábitu s kouzelnickou holí a prastarým grimoárem.',
+        previewColor: '#818cf8',
+        badge: 'Magie'
+      },
+      {
+        id: 'archer',
+        name: 'Hraničář',
+        cost: 250,
+        desc: 'Tichý lesní stopař v maskovacím koženém odění s toulcem a dlouhým lukem.',
+        previewColor: '#16a34a',
+        badge: 'Dálka'
+      },
+      {
+        id: 'paladin',
+        name: 'Zlatý Rytíř',
+        cost: 500,
+        desc: 'Zářivý bojovník světla oděný v těžkém zlatém plátovém brnění se slunečním štítem.',
+        previewColor: '#f59e0b',
+        badge: 'Svatý'
+      },
+      {
+        id: 'dark_knight',
+        name: 'Temný Rytíř',
+        cost: 1000,
+        desc: 'Démonický šampion zkázy v rohaté přilbě s krvavým mečem a pulzující temnou magickou aurou.',
+        previewColor: '#ef4444',
+        badge: 'Karmín'
+      }
+    ];
+  }
+
+  renderShopSkins() {
+    const container = document.getElementById('shop-skins-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const skins = this.getSkinDefinitions();
+    this.updateStatsUI();
+
+    const coinSvg = window.getSvg ? window.getSvg('coin') : '';
+
+    skins.forEach((skin) => {
+      const isUnlocked = this.unlockedSkins.includes(skin.id);
+      const isActive = this.activeSkin === skin.id;
+      const canAfford = !isUnlocked && this.gold >= skin.cost;
+
+      const card = document.createElement('div');
+      card.className = `shop-item-card skin-card ${isActive ? 'active-skin' : ''} ${isUnlocked ? 'unlocked' : ''}`;
+
+      let btnHtml = '';
+      if (isActive) {
+        btnHtml = `<button class="shop-buy-btn skin-btn-active" disabled>AKTIVNÍ</button>`;
+      } else if (isUnlocked) {
+        btnHtml = `<button class="shop-buy-btn skin-btn-equip">VYBRAT</button>`;
+      } else {
+        btnHtml = `
+          <button class="shop-buy-btn" ${!canAfford ? 'disabled' : ''}>
+            Koupit za ${skin.cost} <span class="svg-inline-coin" style="display:inline-flex;vertical-align:middle;margin-left:4px;">${coinSvg}</span>
+          </button>
+        `;
+      }
+
+      card.innerHTML = `
+        <div class="shop-item-icon" style="color:${skin.previewColor};">
+          <svg viewBox="0 0 24 24" class="ic" style="width:40px;height:40px;filter:drop-shadow(0 0 6px ${skin.previewColor});">
+            <circle cx="12" cy="12" r="9" fill="${skin.previewColor}" stroke="#14100c" stroke-width="2"/>
+            <polygon points="12,5 14,10 19,10 15,13 17,19 12,15 7,19 9,13 5,10 10,10" fill="#ffffff" opacity="0.8"/>
+          </svg>
+        </div>
+        <div class="shop-item-title">${skin.name}</div>
+        <div class="shop-item-desc">${skin.desc}</div>
+        <div class="shop-item-level">${isActive ? 'Aktuálně nasazeno' : (isUnlocked ? 'Zakoupeno' : `Cena: ${skin.cost} Zlata`)}</div>
+        ${btnHtml}
+      `;
+
+      const buyBtn = card.querySelector('.shop-buy-btn');
+      if (buyBtn) {
+        if (!isUnlocked && canAfford) {
+          buyBtn.addEventListener('click', () => {
+            this.buySkin(skin.id, skin.cost);
+          });
+        } else if (isUnlocked && !isActive) {
+          buyBtn.addEventListener('click', () => {
+            this.equipSkin(skin.id);
+          });
+        }
+      }
+
+      container.appendChild(card);
+    });
+  }
+
+  buySkin(skinId, cost) {
+    if (this.gold < cost) return;
+    this.gold -= cost;
+    if (!this.unlockedSkins.includes(skinId)) {
+      this.unlockedSkins.push(skinId);
+    }
+    this.activeSkin = skinId;
+    this.savePersistentData();
+    if (this.player && this.player.setSkin) {
+      this.player.setSkin(skinId);
+    }
+    if (window.sound && window.sound.pickupCoin) window.sound.pickupCoin();
+    this.renderShopSkins();
+  }
+
+  equipSkin(skinId) {
+    if (!this.unlockedSkins.includes(skinId)) return;
+    this.activeSkin = skinId;
+    this.savePersistentData();
+    if (this.player && this.player.setSkin) {
+      this.player.setSkin(skinId);
+    }
+    if (window.sound && window.sound.shoot) window.sound.shoot();
+    this.renderShopSkins();
   }
 
   renderShopItems() {
