@@ -39,11 +39,13 @@ class Game {
     this.totalKills = 0;
     this.totalDamageDealt = 0;
     this.runGold = 0; // Zlato získané v aktuálním runu
+    this.gameMode = 'campaign'; // 'campaign' nebo 'endless'
 
     // Meta-progrese a lifetime statistiky
     this.gold = 0; // Celkové uložené zlato
     this.lifetimeStats = {
       bestSurvivalTime: 0,
+      bestEndlessSurvivalTime: 0,
       highestStage: 1,
       highestLevel: 1,
       totalKills: 0
@@ -53,7 +55,9 @@ class Game {
       movespeed: 0,
       damage: 0,
       xpMultiplier: 0,
-      range: 0
+      range: 0,
+      regen: 0,
+      magnet: 0
     };
     this.unlockedSkins = ['default'];
     this.activeSkin = 'default';
@@ -68,7 +72,17 @@ class Game {
     this.enemies = [];
     this.xpGems = [];
     this.goldCoins = []; // Vypadlé mince z monster
+    this.firePatches = []; // Ohnivé stopy zanechané hráčem
+    this.holyCrosses = []; // Rotující posvátné kříže
     this.bossSpawnedForCurrentStage = false;
+
+    // Mechaniky: Anti-Camping & Endless mód & Konsolidace gemů
+    this.campAnchor = { x: 0, y: 0 };
+    this.campTimer = 0;
+    this.campWarnLevel = 0; // 0: v pořádku, 1: výstražná zóna (>3.5s), 2: poškození (>5s)
+    this.campDamageTick = 0;
+    this.endlessBossTimer = 0;
+    this.gemConsolidationTimer = 0;
 
     // Kamera
     this.camera = { x: 0, y: 0 };
@@ -146,12 +160,34 @@ class Game {
   }
 
   setupUI() {
-    // Tlačítko start
-    document.getElementById('btn-start').addEventListener('click', () => {
-      window.sound.init();
-      document.getElementById('start-modal').classList.add('hidden');
-      this.startGame();
-    });
+    // Tlačítko start kampaně
+    const startBtn = document.getElementById('btn-start');
+    if (startBtn) {
+      startBtn.addEventListener('click', () => {
+        window.sound.init();
+        document.getElementById('start-modal').classList.add('hidden');
+        this.startCampaignGame();
+      });
+    }
+
+    const startCampaignBtn = document.getElementById('btn-start-campaign');
+    if (startCampaignBtn) {
+      startCampaignBtn.addEventListener('click', () => {
+        window.sound.init();
+        document.getElementById('start-modal').classList.add('hidden');
+        this.startCampaignGame();
+      });
+    }
+
+    // Tlačítko start Endless módu
+    const startEndlessBtn = document.getElementById('btn-start-endless');
+    if (startEndlessBtn) {
+      startEndlessBtn.addEventListener('click', () => {
+        window.sound.init();
+        document.getElementById('start-modal').classList.add('hidden');
+        this.startEndlessGame();
+      });
+    }
 
     // Tlačítko restart po smrti
     document.getElementById('btn-restart').addEventListener('click', () => {
@@ -191,6 +227,28 @@ class Game {
       this.restartGame();
     });
 
+    // Tlačítko "Zpět do Hlavního menu" v pauze
+    const pauseMenuBtn = document.getElementById('btn-pause-menu');
+    if (pauseMenuBtn) {
+      pauseMenuBtn.addEventListener('click', () => {
+        this.quitToMainMenu();
+      });
+    }
+
+    // Tlačítko "Zpět do Hlavního menu" v Game Over a Victory
+    const goMenuBtn = document.getElementById('btn-gameover-menu');
+    if (goMenuBtn) {
+      goMenuBtn.addEventListener('click', () => {
+        this.quitToMainMenu();
+      });
+    }
+    const vicMenuBtn = document.getElementById('btn-victory-menu');
+    if (vicMenuBtn) {
+      vicMenuBtn.addEventListener('click', () => {
+        this.quitToMainMenu();
+      });
+    }
+
     // Zvuk mute/unmute
     const audioBtn = document.getElementById('btn-audio');
     if (audioBtn) {
@@ -214,6 +272,21 @@ class Game {
     if (closeShopBtn) {
       closeShopBtn.addEventListener('click', () => {
         this.closeShopModal();
+      });
+    }
+
+    // Otevření a zavření Kroniky Statistik
+    const openStatsBtn = document.getElementById('btn-open-stats');
+    if (openStatsBtn) {
+      openStatsBtn.addEventListener('click', () => {
+        window.sound.init();
+        this.openStatsModal();
+      });
+    }
+    const closeStatsBtn = document.getElementById('btn-close-stats');
+    if (closeStatsBtn) {
+      closeStatsBtn.addEventListener('click', () => {
+        this.closeStatsModal();
       });
     }
 
@@ -350,11 +423,50 @@ class Game {
     this.lastTime = performance.now(); // zabránit časovému skoku
   }
 
+  startCampaignGame() {
+    this.gameMode = 'campaign';
+    this.startGame();
+  }
+
+  startEndlessGame() {
+    this.gameMode = 'endless';
+    this.startGame();
+  }
+
+  quitToMainMenu() {
+    this.state = 'start';
+    const modals = [
+      'pause-modal', 'gameover-modal', 'victory-modal',
+      'levelup-modal', 'stage-clear-modal', 'shop-modal', 'stats-modal'
+    ];
+    modals.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    });
+    const startModal = document.getElementById('start-modal');
+    if (startModal) startModal.classList.remove('hidden');
+    this.updateStatsUI();
+  }
+
+  openStatsModal() {
+    const modal = document.getElementById('stats-modal');
+    if (modal) modal.classList.remove('hidden');
+    this.updateStatsUI();
+  }
+
+  closeStatsModal() {
+    const modal = document.getElementById('stats-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
   startGame() {
     this.state = 'playing';
     document.getElementById('pause-modal').classList.add('hidden');
     document.getElementById('start-modal').classList.add('hidden');
     document.getElementById('shop-modal').classList.add('hidden');
+    const statsModal = document.getElementById('stats-modal');
+    if (statsModal) statsModal.classList.add('hidden');
+
     this.currentStageIndex = 0;
     this.survivalTime = 0;
     this.stageTimer = 0;
@@ -371,8 +483,18 @@ class Game {
     this.enemies = [];
     this.xpGems = [];
     this.goldCoins = [];
+    this.firePatches = [];
+    this.holyCrosses = [];
     window.particleSystem.reset();
     window.buffManager.reset();
+
+    // Reset mechanik Anti-Camping a Endless
+    this.campAnchor = { x: this.player.x, y: this.player.y };
+    this.campTimer = 0;
+    this.campWarnLevel = 0;
+    this.campDamageTick = 0;
+    this.endlessBossTimer = 0;
+    this.gemConsolidationTimer = 0;
 
     this.bossSpawnedForCurrentStage = false;
     this.updateHUD();
@@ -387,6 +509,18 @@ class Game {
   }
 
   get currentStageConfig() {
+    if (this.gameMode === 'endless') {
+      const effStage = 1 + Math.floor(this.survivalTime / 50);
+      const stageIdx = (effStage - 1) % window.STAGE_CONFIGS.length;
+      const baseCfg = window.STAGE_CONFIGS[stageIdx] || window.STAGE_CONFIGS[0];
+      return {
+        ...baseCfg,
+        stage: effStage,
+        name: `Nekonečné Hordy (Vlna ${effStage})`,
+        durationSeconds: 9999999,
+        spawnRate: 1.8 + Math.min(6.5, (this.survivalTime / 35) * 0.45)
+      };
+    }
     return window.STAGE_CONFIGS[this.currentStageIndex] || window.STAGE_CONFIGS[window.STAGE_CONFIGS.length - 1];
   }
 
@@ -443,6 +577,10 @@ class Game {
     this.survivalTime += dt;
     this.stageTimer += dt;
 
+    // Mechaniky: Anti-Camping a Gem Consolidation
+    this.checkAntiCamping(dt);
+    this.consolidateGems(dt);
+
     // Aktualizace hráče (klávesnice + joystick)
     const joyVec = { x: this.joystick.inputX, y: this.joystick.inputY };
     this.player.update(dt, this.keys, joyVec);
@@ -459,8 +597,28 @@ class Game {
     // Autoshooting mechanika
     this.handleAutoShooting(dt);
 
-    // Dodatečné schopnosti (Blesky & Orbitals)
+    // Dodatečné schopnosti (Blesky, Orbitals, Fire Trail, Holy Cross)
     this.handleSpecialPassives(dt);
+
+    // Aktualizace stop Fire Trail
+    this.firePatches = this.firePatches.filter((p) => {
+      return p.update(dt, this.enemies, (e, dmg) => {
+        this.totalDamageDealt += dmg;
+        if (e.takeDamage(dmg)) {
+          this.onEnemyKilled(e);
+        }
+      });
+    });
+
+    // Aktualizace projektilů Holy Cross
+    this.holyCrosses = this.holyCrosses.filter((c) => {
+      return c.update(dt, this.enemies, (e, dmg) => {
+        this.totalDamageDealt += dmg;
+        if (e.takeDamage(dmg)) {
+          this.onEnemyKilled(e);
+        }
+      });
+    });
 
     // Spawnování nepřátel
     this.handleEnemySpawning(dt);
@@ -730,9 +888,123 @@ class Game {
         }
       }
     }
+
+    // 3. Fire Trail (Ohnivá stopa za hráčem)
+    if (this.player.hasFireTrail) {
+      if (this.player.fireTrailTimer <= 0) {
+        this.player.fireTrailTimer = 0.28;
+        const lvl = this.player.fireTrailLevel || 1;
+        const patchRadius = 20 + lvl * 3;
+        const patchDmg = Math.round(this.player.damage * (0.35 + lvl * 0.12));
+        const patchDuration = 2.4 + lvl * 0.4;
+        this.firePatches.push(new FirePatch(this.player.x, this.player.y, patchDmg, patchRadius, patchDuration));
+      }
+    }
+
+    // 4. Holy Cross (Posvátný rotující kříž)
+    if (this.player.hasHolyCross) {
+      if (this.player.holyCrossTimer <= 0) {
+        const lvl = this.player.holyCrossLevel || 1;
+        this.player.holyCrossTimer = Math.max(1.2, 2.8 - lvl * 0.35);
+        const crossDmg = Math.round(this.player.damage * (1.1 + lvl * 0.25));
+        const count = lvl >= 3 ? 8 : (lvl >= 2 ? 6 : 4);
+        const baseAngle = Math.random() * Math.PI * 2;
+        const crossSpeed = 4.8;
+        for (let i = 0; i < count; i++) {
+          const ang = baseAngle + (i * (Math.PI * 2 / count));
+          const vx = Math.cos(ang) * crossSpeed;
+          const vy = Math.sin(ang) * crossSpeed;
+          this.holyCrosses.push(new HolyCrossProjectile(this.player.x, this.player.y, vx, vy, crossDmg, 16 + lvl * 2, 3.2));
+        }
+        if (window.sound && window.sound.shoot) window.sound.shoot();
+      }
+    }
+  }
+
+  checkAntiCamping(dt) {
+    const dist = Math.hypot(this.player.x - this.campAnchor.x, this.player.y - this.campAnchor.y);
+    if (dist > 75) {
+      // Hráč se pohnul - reset varování
+      this.campAnchor.x = this.player.x;
+      this.campAnchor.y = this.player.y;
+      this.campTimer = 0;
+      this.campWarnLevel = 0;
+      this.campDamageTick = 0;
+    } else {
+      this.campTimer += dt;
+      if (this.campTimer >= 5.0) {
+        this.campWarnLevel = 2; // Trest za kempování
+        this.campDamageTick += dt;
+        if (this.campDamageTick >= 0.5) {
+          this.campDamageTick = 0;
+          this.player.takeDamage(8);
+          if (window.particleSystem) {
+            window.particleSystem.spawnExplosion(this.player.x, this.player.y, '#ef4444', 12);
+          }
+          if (this.player.hp <= 0) {
+            this.triggerGameOver();
+          }
+        }
+      } else if (this.campTimer >= 3.5) {
+        this.campWarnLevel = 1; // Varovná zóna
+      } else {
+        this.campWarnLevel = 0;
+      }
+    }
+  }
+
+  consolidateGems(dt) {
+    this.gemConsolidationTimer = (this.gemConsolidationTimer || 0) + dt;
+    if (this.gemConsolidationTimer < 0.6) return;
+    this.gemConsolidationTimer = 0;
+
+    if (this.xpGems.length <= 55) return;
+
+    // Spojování sousedních krystalů pro udržení plynulosti hry bez ztráty zkušeností
+    const mergedIndices = new Set();
+    for (let i = 0; i < this.xpGems.length; i++) {
+      if (mergedIndices.has(i)) continue;
+      const g1 = this.xpGems[i];
+      for (let j = i + 1; j < this.xpGems.length; j++) {
+        if (mergedIndices.has(j)) continue;
+        const g2 = this.xpGems[j];
+        if (Math.hypot(g1.x - g2.x, g1.y - g2.y) < 110) {
+          g1.mergeWith(g2);
+          mergedIndices.add(j);
+          if (this.xpGems.length - mergedIndices.size <= 45) break;
+        }
+      }
+      if (this.xpGems.length - mergedIndices.size <= 45) break;
+    }
+
+    if (mergedIndices.size > 0) {
+      this.xpGems = this.xpGems.filter((_, idx) => !mergedIndices.has(idx));
+    }
   }
 
   handleEnemySpawning(dt) {
+    if (this.gameMode === 'endless') {
+      this.spawnTimer += dt;
+      this.endlessBossTimer = (this.endlessBossTimer || 0) + dt;
+
+      const effStage = 1 + Math.floor(this.survivalTime / 50);
+      const spawnRate = 1.8 + Math.min(6.5, (this.survivalTime / 35) * 0.45);
+      const spawnInterval = 1 / spawnRate;
+
+      if (this.spawnTimer >= spawnInterval) {
+        this.spawnTimer = 0;
+        this.spawnEndlessEnemyAtEdge(effStage);
+      }
+
+      // Bossové v Endless módu každých 120 sekund (2 minuty)
+      if (this.endlessBossTimer >= 120) {
+        this.endlessBossTimer = 0;
+        this.spawnEndlessBoss(effStage);
+      }
+      return;
+    }
+
+    // Klasická Kampaň
     const config = this.currentStageConfig;
     this.spawnTimer += dt;
     const spawnInterval = 1 / config.spawnRate;
@@ -746,6 +1018,39 @@ class Game {
     if (!this.bossSpawnedForCurrentStage && this.stageTimer >= config.durationSeconds - 10) {
       this.spawnBoss(config);
       this.bossSpawnedForCurrentStage = true;
+    }
+  }
+
+  spawnEndlessEnemyAtEdge(effStage) {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.max(this.canvas.width, this.canvas.height) * 0.65;
+    const x = this.player.x + Math.cos(angle) * distance;
+    const y = this.player.y + Math.sin(angle) * distance;
+
+    const pool = ['zombie', 'skeleton'];
+    if (effStage >= 2) pool.push('bat', 'slime');
+    if (effStage >= 3) pool.push('cultist', 'ghost');
+    if (effStage >= 4) pool.push('skeleton_archer', 'armored_knight');
+    if (effStage >= 5) pool.push('fire_imp', 'ice_wraith');
+    if (effStage >= 6) pool.push('hell_hound', 'infernal_brute');
+
+    const type = pool[Math.floor(Math.random() * pool.length)];
+    this.enemies.push(new Enemy(x, y, type, effStage));
+  }
+
+  spawnEndlessBoss(effStage) {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.max(this.canvas.width, this.canvas.height) * 0.6;
+    const x = this.player.x + Math.cos(angle) * distance;
+    const y = this.player.y + Math.sin(angle) * distance;
+
+    const bossPool = ['necromancer', 'vampire_lord', 'death_knight', 'void_overlord', 'infernal_colossus'];
+    const bossType = bossPool[(effStage - 1) % bossPool.length];
+
+    const boss = new BossEnemy(x, y, bossType, effStage);
+    this.enemies.push(boss);
+    if (window.particleSystem) {
+      window.particleSystem.spawnExplosion(x, y, '#ef4444', 40);
     }
   }
 
@@ -857,6 +1162,9 @@ class Game {
   }
 
   checkStageProgress() {
+    if (this.gameMode === 'endless') {
+      return; // Endless mód nemá přechody mezi stages, běží neomezeně
+    }
     const config = this.currentStageConfig;
     // Postup do další stage po vypršení času zóny a zabití bosse (nebo pokud boss padl a čas uběhl)
     const bossAlive = this.enemies.some(e => e.isBoss);
@@ -954,8 +1262,14 @@ class Game {
     document.getElementById('survival-timer').textContent = this.formatTime(this.survivalTime);
 
     // Stage
-    document.getElementById('stage-display').textContent = this.currentStageConfig.stage;
-    document.getElementById('stage-name').textContent = this.currentStageConfig.name;
+    if (this.gameMode === 'endless') {
+      const effStage = 1 + Math.floor(this.survivalTime / 50);
+      document.getElementById('stage-display').textContent = '∞';
+      document.getElementById('stage-name').textContent = `Endless (Vlna ${effStage})`;
+    } else {
+      document.getElementById('stage-display').textContent = this.currentStageConfig.stage;
+      document.getElementById('stage-name').textContent = this.currentStageConfig.name;
+    }
   }
 
   updateBuffIconsHUD() {
@@ -1010,11 +1324,40 @@ class Game {
     }
     ctx.globalAlpha = 1.0;
 
+    // 1.2. Výstražná runová zóna při kempování (Anti-Camping)
+    if (this.campWarnLevel > 0) {
+      ctx.save();
+      const sx = this.campAnchor.x - this.camera.x;
+      const sy = this.campAnchor.y - this.camera.y;
+      const pulse = Math.sin(performance.now() * 0.008) * 6;
+      const isDmg = this.campWarnLevel === 2;
+      ctx.strokeStyle = isDmg ? 'rgba(239, 68, 68, 0.9)' : 'rgba(245, 158, 11, 0.85)';
+      ctx.fillStyle = isDmg ? 'rgba(239, 68, 68, 0.22)' : 'rgba(245, 158, 11, 0.15)';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.arc(sx, sy, 75 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = isDmg ? '#ef4444' : '#f59e0b';
+      ctx.font = 'bold 14px Crimson Text, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(isDmg ? '⚠️ TREST ZA KEMPOVÁNÍ! POHYBUJ SE!' : '⚠️ NESTŮJ NA MÍSTĚ!', sx, sy - 85);
+      ctx.restore();
+    }
+
     // 1.5. Překážky - Rybníky a vodní plochy (vykreslené na terénu před předměty)
     for (let i = 0; i < this.obstacles.length; i++) {
       if (this.obstacles[i].isWater) {
         this.obstacles[i].draw(ctx, this.camera);
       }
+    }
+
+    // 1.8. Ohnivé stopy Fire Trail na zemi
+    for (let i = 0; i < this.firePatches.length; i++) {
+      this.firePatches[i].draw(ctx, this.camera);
     }
 
     // 2. XP Krystaly a Mince (Gold Drops)
@@ -1043,6 +1386,11 @@ class Game {
     }
     for (let i = 0; i < this.enemyProjectiles.length; i++) {
       this.enemyProjectiles[i].draw(ctx, this.camera);
+    }
+
+    // 4.5. Rotující posvátné kříže Holy Cross
+    for (let i = 0; i < this.holyCrosses.length; i++) {
+      this.holyCrosses[i].draw(ctx, this.camera);
     }
 
     // 5. Hráč
@@ -1118,42 +1466,58 @@ class Game {
       this.player.setSkin(this.activeSkin);
     }
 
-    // 1. Max HP (+15 HP za úroveň)
+    // 1. Max HP (+8 HP za úroveň)
     const hpLvl = this.metaUpgrades.maxHp || 0;
-    this.player.maxHp += hpLvl * 15;
-    this.player.hp = this.player.maxHp;
+    this.player.metaMaxHpBonus = hpLvl * 8;
 
-    // 2. Movement Speed (+6% za úroveň)
+    // 2. Movement Speed (+3% za úroveň)
     const speedLvl = this.metaUpgrades.movespeed || 0;
-    this.player.speedMult += speedLvl * 0.06;
+    this.player.metaSpeedBonus = speedLvl * 0.03;
 
-    // 3. Damage (+10% za úroveň)
+    // 3. Damage (+5% za úroveň)
     const dmgLvl = this.metaUpgrades.damage || 0;
-    this.player.damageMult += dmgLvl * 0.10;
+    this.player.metaDamageBonus = dmgLvl * 0.05;
 
-    // 4. XP Multiplier (+12% za úroveň)
+    // 4. XP Multiplier (+6% za úroveň)
     const xpLvl = this.metaUpgrades.xpMultiplier || 0;
-    this.player.xpMult = 1.0 + xpLvl * 0.12;
+    this.player.xpMult = 1.0 + xpLvl * 0.06;
 
-    // 5. Attack Range (+8% za úroveň)
+    // 5. Attack Range (+4% za úroveň)
     const rangeLvl = this.metaUpgrades.range || 0;
-    this.player.rangeMult += rangeLvl * 0.08;
+    this.player.metaRangeBonus = rangeLvl * 0.04;
+
+    // 6. Health Regen (+0.3 HP/s za úroveň)
+    const regenLvl = this.metaUpgrades.regen || 0;
+    this.player.metaHpRegen = regenLvl * 0.3;
+
+    // 7. Magnet (+12% za úroveň)
+    const magnetLvl = this.metaUpgrades.magnet || 0;
+    this.player.metaMagnetBonus = magnetLvl * 0.12;
+
+    this.player.recalculateMaxHp();
+    this.player.recalculateHpRegen();
+    this.player.hp = this.player.maxHp;
   }
 
   recordRunStatistics() {
     let updated = false;
 
-    // Nejlepší přežitý čas
-    if (this.survivalTime > (this.lifetimeStats.bestSurvivalTime || 0)) {
-      this.lifetimeStats.bestSurvivalTime = Math.floor(this.survivalTime);
-      updated = true;
-    }
-
-    // Nejvyšší stage
-    const currentStage = this.currentStageConfig.stage;
-    if (currentStage > (this.lifetimeStats.highestStage || 1)) {
-      this.lifetimeStats.highestStage = currentStage;
-      updated = true;
+    // Záznam dle herního režimu
+    if (this.gameMode === 'endless') {
+      if (this.survivalTime > (this.lifetimeStats.bestEndlessSurvivalTime || 0)) {
+        this.lifetimeStats.bestEndlessSurvivalTime = Math.floor(this.survivalTime);
+        updated = true;
+      }
+    } else {
+      if (this.survivalTime > (this.lifetimeStats.bestSurvivalTime || 0)) {
+        this.lifetimeStats.bestSurvivalTime = Math.floor(this.survivalTime);
+        updated = true;
+      }
+      const currentStage = this.currentStageConfig.stage;
+      if (currentStage > (this.lifetimeStats.highestStage || 1)) {
+        this.lifetimeStats.highestStage = currentStage;
+        updated = true;
+      }
     }
 
     // Nejvyšší level
@@ -1172,21 +1536,40 @@ class Game {
 
   updateStatsUI() {
     const bestTimeEl = document.getElementById('stats-best-time');
+    const bestEndlessEl = document.getElementById('stats-endless-time');
     const maxStageEl = document.getElementById('stats-max-stage');
     const maxLevelEl = document.getElementById('stats-max-level');
     const totalKillsEl = document.getElementById('stats-total-kills');
     const goldAmountEl = document.getElementById('stats-gold-amount');
     const shopGoldAmountEl = document.getElementById('shop-gold-amount');
 
-    if (bestTimeEl) bestTimeEl.textContent = this.formatTime(this.lifetimeStats.bestSurvivalTime || 0);
+    const mBestTime = document.getElementById('modal-stats-best-time');
+    const mBestEndless = document.getElementById('modal-stats-endless-time');
+    const mMaxStage = document.getElementById('modal-stats-max-stage');
+    const mMaxLevel = document.getElementById('modal-stats-max-level');
+    const mTotalKills = document.getElementById('modal-stats-total-kills');
+    const mGold = document.getElementById('modal-stats-gold-amount');
+
+    const campTimeFormatted = this.formatTime(this.lifetimeStats.bestSurvivalTime || 0);
+    const endlessTimeFormatted = this.formatTime(this.lifetimeStats.bestEndlessSurvivalTime || 0);
+
+    if (bestTimeEl) bestTimeEl.textContent = campTimeFormatted;
+    if (bestEndlessEl) bestEndlessEl.textContent = endlessTimeFormatted;
     if (maxStageEl) maxStageEl.textContent = `Stage ${this.lifetimeStats.highestStage || 1}`;
     if (maxLevelEl) maxLevelEl.textContent = `Lvl ${this.lifetimeStats.highestLevel || 1}`;
     if (totalKillsEl) totalKillsEl.textContent = this.lifetimeStats.totalKills || 0;
     if (goldAmountEl) goldAmountEl.textContent = this.gold;
     if (shopGoldAmountEl) shopGoldAmountEl.textContent = this.gold;
+
+    if (mBestTime) mBestTime.textContent = campTimeFormatted;
+    if (mBestEndless) mBestEndless.textContent = endlessTimeFormatted;
+    if (mMaxStage) mMaxStage.textContent = `Stage ${this.lifetimeStats.highestStage || 1}`;
+    if (mMaxLevel) mMaxLevel.textContent = `Lvl ${this.lifetimeStats.highestLevel || 1}`;
+    if (mTotalKills) mTotalKills.textContent = this.lifetimeStats.totalKills || 0;
+    if (mGold) mGold.textContent = this.gold;
   }
 
-  // Definice permanentních vylepšení v obchodě
+  // Definice permanentních vylepšení v obchodě (exponenciální ceny a vyvážené hodnoty)
   getShopDefinitions() {
     const svg = (key) => (window.getSvg ? window.getSvg(key) : '');
     return [
@@ -1194,41 +1577,57 @@ class Game {
         id: 'maxHp',
         name: 'Dračí Vitalita',
         icon: svg('heart'),
-        desc: '+15 základních Max HP pro každou budoucí hru.',
+        desc: '+8 základních Max HP pro každou budoucí hru.',
         maxLevel: 10,
-        costPerLevel: (lvl) => 15 + lvl * 15
+        costPerLevel: (lvl) => Math.round(20 * Math.pow(1.55, lvl))
       },
       {
         id: 'movespeed',
         name: 'Rychlé Boty',
         icon: svg('boots'),
-        desc: '+6% permanentní rychlost pohybu postavy.',
+        desc: '+3% permanentní rychlost pohybu postavy.',
         maxLevel: 10,
-        costPerLevel: (lvl) => 20 + lvl * 20
+        costPerLevel: (lvl) => Math.round(25 * Math.pow(1.60, lvl))
       },
       {
         id: 'damage',
         name: 'Surová Síla',
         icon: svg('sword'),
-        desc: '+10% trvalý nárůst poškození pro všechny zbraně.',
+        desc: '+5% trvalý nárůst poškození pro všechny zbraně.',
         maxLevel: 10,
-        costPerLevel: (lvl) => 25 + lvl * 25
+        costPerLevel: (lvl) => Math.round(30 * Math.pow(1.60, lvl))
       },
       {
         id: 'xpMultiplier',
         name: 'Moudrost Prastarých',
         icon: svg('book'),
-        desc: '+12% bonus k veškerým sebraným XP krystalům.',
+        desc: '+6% bonus k veškerým sebraným XP krystalům.',
         maxLevel: 10,
-        costPerLevel: (lvl) => 30 + lvl * 25
+        costPerLevel: (lvl) => Math.round(35 * Math.pow(1.65, lvl))
       },
       {
         id: 'range',
         name: 'Ostrý Zrak',
         icon: svg('bow'),
-        desc: '+8% trvalý dosah zaměřování a střelby.',
+        desc: '+4% trvalý dosah zaměřování a střelby.',
         maxLevel: 8,
-        costPerLevel: (lvl) => 20 + lvl * 20
+        costPerLevel: (lvl) => Math.round(25 * Math.pow(1.55, lvl))
+      },
+      {
+        id: 'regen',
+        name: 'Krev Fénixe',
+        icon: svg('potion'),
+        desc: '+0.3 HP za sekundu trvalá regenerace zdraví.',
+        maxLevel: 8,
+        costPerLevel: (lvl) => Math.round(40 * Math.pow(1.70, lvl))
+      },
+      {
+        id: 'magnet',
+        name: 'Aura Přitažlivosti',
+        icon: svg('magnet'),
+        desc: '+12% trvalý dosah magnetu pro XP drahokamy a zlato.',
+        maxLevel: 8,
+        costPerLevel: (lvl) => Math.round(20 * Math.pow(1.50, lvl))
       }
     ];
   }
@@ -1349,17 +1748,20 @@ class Game {
       }
 
       card.innerHTML = `
-        <div class="shop-item-icon" style="color:${skin.previewColor};">
-          <svg viewBox="0 0 24 24" class="ic" style="width:40px;height:40px;filter:drop-shadow(0 0 6px ${skin.previewColor});">
-            <circle cx="12" cy="12" r="9" fill="${skin.previewColor}" stroke="#14100c" stroke-width="2"/>
-            <polygon points="12,5 14,10 19,10 15,13 17,19 12,15 7,19 9,13 5,10 10,10" fill="#ffffff" opacity="0.8"/>
-          </svg>
+        <div class="shop-item-icon skin-preview-wrapper" style="width:68px;height:68px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle, rgba(45,34,24,0.9), rgba(16,11,7,0.98));border:1.5px solid rgba(212,175,55,0.45);border-radius:8px;box-shadow:inset 0 0 12px rgba(0,0,0,0.7);">
+          <canvas class="skin-preview-canvas" width="64" height="64" style="image-rendering:pixelated;"></canvas>
         </div>
         <div class="shop-item-title">${skin.name}</div>
         <div class="shop-item-desc">${skin.desc}</div>
         <div class="shop-item-level">${isActive ? 'Aktuálně nasazeno' : (isUnlocked ? 'Zakoupeno' : `Cena: ${skin.cost} Zlata`)}</div>
         ${btnHtml}
       `;
+
+      const previewCanvas = card.querySelector('.skin-preview-canvas');
+      if (previewCanvas && window.Player && window.Player.drawSkinPreview) {
+        const pCtx = previewCanvas.getContext('2d');
+        window.Player.drawSkinPreview(pCtx, skin.id, 64, 64);
+      }
 
       const buyBtn = card.querySelector('.shop-buy-btn');
       if (buyBtn) {

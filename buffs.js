@@ -11,7 +11,7 @@ const BUFF_DEFINITIONS = [
     description: 'Zvyšuje rychlost pohybu o +20%. Snadnější únik před monstry.',
     maxLevel: 5,
     apply: (player) => {
-      player.speedMult += 0.20;
+      player.inGameSpeedMult += 0.20;
     }
   },
   {
@@ -37,7 +37,7 @@ const BUFF_DEFINITIONS = [
     description: 'Zvyšuje dosah střelby a detekce nepřátel o +30%.',
     maxLevel: 5,
     apply: (player) => {
-      player.rangeMult += 0.30;
+      player.inGameRangeMult += 0.30;
     }
   },
   {
@@ -63,7 +63,7 @@ const BUFF_DEFINITIONS = [
     description: 'Zvyšuje veškeré poškození zbraní o +25%.',
     maxLevel: 5,
     apply: (player) => {
-      player.damageMult += 0.25;
+      player.inGameDamageMult += 0.25;
     }
   },
   {
@@ -122,16 +122,44 @@ const BUFF_DEFINITIONS = [
     }
   },
   {
+    id: 'fire_trail',
+    name: 'Ohnivá Stopa',
+    iconKey: 'fire',
+    get icon() { return window.getSvg ? window.getSvg('fire') : ''; },
+    tier: 'Aktivní útok',
+    rarity: 'epic',
+    description: 'Zanechává za tebou ohnivou stopu žhnoucích plamenů spalujících nepřátele.',
+    maxLevel: 4,
+    apply: (player) => {
+      player.hasFireTrail = true;
+      player.fireTrailLevel = (player.fireTrailLevel || 0) + 1;
+    }
+  },
+  {
+    id: 'holy_cross',
+    name: 'Posvátný Kříž',
+    iconKey: 'cross',
+    get icon() { return window.getSvg ? window.getSvg('cross') : ''; },
+    tier: 'Svatá magie',
+    rarity: 'legendary',
+    description: 'Pravidelně vystřeluje rotující posvátné kříže prorážející skrz celé hordy.',
+    maxLevel: 4,
+    apply: (player) => {
+      player.hasHolyCross = true;
+      player.holyCrossLevel = (player.holyCrossLevel || 0) + 1;
+    }
+  },
+  {
     id: 'magnet',
     name: 'Magnet na Duše',
     iconKey: 'magnet',
     get icon() { return window.getSvg ? window.getSvg('magnet') : ''; },
     tier: 'Užitek',
     rarity: 'common',
-    description: 'Zvyšuje dosah sběru XP drahokamů o +50%.',
+    description: 'Zvyšuje dosah sběru XP drahokamů a mincí o +50%.',
     maxLevel: 4,
     apply: (player) => {
-      player.magnetRangeMult += 0.50;
+      player.inGameMagnetMult += 0.50;
     }
   },
   {
@@ -144,7 +172,8 @@ const BUFF_DEFINITIONS = [
     description: 'Obnovuje +1.5 HP za sekundu a okamžitě vyléčí 30 HP.',
     maxLevel: 4,
     apply: (player) => {
-      player.hpRegen += 1.5;
+      player.inGameHpRegen += 1.5;
+      player.recalculateHpRegen();
       player.heal(30);
     }
   },
@@ -158,8 +187,8 @@ const BUFF_DEFINITIONS = [
     description: 'Zvyšuje maximální životy o +30 a plně tě vyléčí na tuto hodnotu.',
     maxLevel: 5,
     apply: (player) => {
-      player.maxHp += 30;
-      player.hp = Math.min(player.maxHp, player.hp + 30);
+      player.inGameMaxHpBonus += 30;
+      player.recalculateMaxHp(true);
     }
   }
 ];

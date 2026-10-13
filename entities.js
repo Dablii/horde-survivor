@@ -6,28 +6,38 @@ class Player {
     this.x = x;
     this.y = y;
     this.radius = 16;
-    this.baseSpeed = 3.2;
-    this.speedMult = 1.0;
 
-    // Zdraví
+    // Rychlost pohybu (decoupled škálování)
+    this.baseSpeed = 3.2;
+    this.metaSpeedBonus = 0; // z trvalých upgradů (+0.03 za lvl)
+    this.inGameSpeedMult = 1.0; // z in-game karet
+
+    // Zdraví & Regenerace
+    this.baseMaxHp = 100;
+    this.metaMaxHpBonus = 0; // z trvalých upgradů (+8 za lvl)
+    this.inGameMaxHpBonus = 0; // z in-game karet (+30 za lvl)
     this.maxHp = 100;
     this.hp = 100;
-    this.hpRegen = 0; // za sekundu
+    this.metaHpRegen = 0; // z trvalých upgradů (+0.3 HP/s za lvl)
+    this.inGameHpRegen = 0; // z in-game karet (+1.5 HP/s za lvl)
+    this.hpRegen = 0;
 
     // Útočné staty
     this.fireCooldown = 0;
     this.baseFireInterval = 0.55; // sekundy mezi střelami
     this.fireRateMult = 1.0;
     this.baseDamage = 25;
-    this.damageMult = 1.0;
+    this.metaDamageBonus = 0; // z trvalých upgradů (+0.05 za lvl)
+    this.inGameDamageMult = 1.0; // z in-game karet (+0.25 za lvl)
     this.baseRange = 320;
-    this.rangeMult = 1.0;
+    this.metaRangeBonus = 0; // z trvalých upgradů (+0.04 za lvl)
+    this.inGameRangeMult = 1.0; // z in-game karet (+0.30 za lvl)
     this.extraProjectiles = 0;
     this.pierceCount = 0;
     this.hasSplash = false;
     this.splashRadius = 0;
 
-    // Meta-progrese bonusy
+    // Meta-progrese XP bonus
     this.xpMult = 1.0;
 
     // Orbiting blades
@@ -40,9 +50,20 @@ class Player {
     this.lightningCooldown = 0;
     this.lightningChain = 0;
 
+    // Fire Trail (Aktivní schopnost)
+    this.hasFireTrail = false;
+    this.fireTrailLevel = 0;
+    this.fireTrailTimer = 0;
+
+    // Holy Cross (Aktivní schopnost)
+    this.hasHolyCross = false;
+    this.holyCrossLevel = 0;
+    this.holyCrossTimer = 0;
+
     // XP a Magnet
     this.magnetBaseRange = 75;
-    this.magnetRangeMult = 1.0;
+    this.metaMagnetBonus = 0; // z trvalých upgradů (+0.12 za lvl)
+    this.inGameMagnetMult = 1.0; // z in-game karet (+0.50 za lvl)
     this.xp = 0;
     this.xpToNextLevel = 10;
     this.level = 1;
@@ -67,8 +88,15 @@ class Player {
     return 1 + (this.orbitalsCount - 1) * 0.18;
   }
 
+  // Multiplikativní gettery eliminující scaling bug
   get speed() {
-    return this.baseSpeed * this.speedMult;
+    return this.baseSpeed * (1 + this.metaSpeedBonus) * this.inGameSpeedMult;
+  }
+  get speedMult() {
+    return (1 + this.metaSpeedBonus) * this.inGameSpeedMult;
+  }
+  set speedMult(val) {
+    this.inGameSpeedMult = val;
   }
 
   get fireInterval() {
@@ -76,15 +104,46 @@ class Player {
   }
 
   get damage() {
-    return Math.round(this.baseDamage * this.damageMult);
+    return Math.round(this.baseDamage * (1 + this.metaDamageBonus) * this.inGameDamageMult);
+  }
+  get damageMult() {
+    return (1 + this.metaDamageBonus) * this.inGameDamageMult;
+  }
+  set damageMult(val) {
+    this.inGameDamageMult = val;
   }
 
   get range() {
-    return this.baseRange * this.rangeMult;
+    return this.baseRange * (1 + this.metaRangeBonus) * this.inGameRangeMult;
+  }
+  get rangeMult() {
+    return (1 + this.metaRangeBonus) * this.inGameRangeMult;
+  }
+  set rangeMult(val) {
+    this.inGameRangeMult = val;
   }
 
   get magnetRange() {
-    return this.magnetBaseRange * this.magnetRangeMult;
+    return this.magnetBaseRange * (1 + this.metaMagnetBonus) * this.inGameMagnetMult;
+  }
+  get magnetRangeMult() {
+    return (1 + this.metaMagnetBonus) * this.inGameMagnetMult;
+  }
+  set magnetRangeMult(val) {
+    this.inGameMagnetMult = val;
+  }
+
+  recalculateMaxHp(healDifference = false) {
+    const oldMax = this.maxHp;
+    this.maxHp = Math.round(this.baseMaxHp + this.metaMaxHpBonus + this.inGameMaxHpBonus);
+    if (healDifference && this.maxHp > oldMax) {
+      this.hp += (this.maxHp - oldMax);
+    }
+    this.hp = Math.min(this.maxHp, this.hp);
+  }
+
+  recalculateHpRegen() {
+    this.hpRegen = this.metaHpRegen + this.inGameHpRegen;
   }
 
   heal(amount) {
@@ -151,6 +210,26 @@ class Player {
     if (this.hasLightning) {
       this.lightningCooldown -= dt;
     }
+
+    // Odpočet schopností Fire Trail a Holy Cross
+    if (this.hasFireTrail) {
+      this.fireTrailTimer -= dt;
+    }
+    if (this.hasHolyCross) {
+      this.holyCrossTimer -= dt;
+    }
+  }
+
+  // Pomocné živé vykreslení náhledu skinu pro obchod
+  static drawSkinPreview(ctx, skinId, width = 64, height = 64) {
+    ctx.clearRect(0, 0, width, height);
+    const dummy = new Player(width / 2, height / 2 + 6);
+    dummy.skin = skinId;
+    dummy.facing = 1;
+    dummy.moving = false;
+    dummy.invulnTimer = 0;
+    dummy.walkAnimTime = performance.now() * 0.003;
+    dummy.draw(ctx, { x: 0, y: 0 });
   }
 
   // 2D Top-Down středověký hrdina: Vykreslování podle vybraného skinu (default, mage, archer, paladin, dark_knight)
@@ -848,6 +927,57 @@ class Enemy {
         this.color = '#dc2626';
         this.xpValue = 8;
         break;
+      case 'cultist':
+        this.name = 'Kultista Temnoty';
+        this.radius = 16;
+        this.hp = 60;
+        this.speed = 1.9;
+        this.damage = 16;
+        this.color = '#a855f7';
+        this.xpValue = 5;
+        this.isShooter = true;
+        this.shootCooldown = 2.4 + Math.random() * 1.2;
+        this.telegraphTimer = 0;
+        this.telegraphDuration = 0.7;
+        this.telegraphTarget = null;
+        break;
+      case 'skeleton_archer':
+        this.name = 'Kostlivý Lučištník';
+        this.radius = 14;
+        this.hp = 38;
+        this.speed = 2.0;
+        this.damage = 14;
+        this.color = '#cbd5e1';
+        this.xpValue = 4;
+        this.isShooter = true;
+        this.shootCooldown = 2.0 + Math.random() * 1.0;
+        this.telegraphTimer = 0;
+        this.telegraphDuration = 0.65;
+        this.telegraphTarget = null;
+        break;
+      case 'fire_imp':
+        this.name = 'Ohnivý Diblík';
+        this.radius = 13;
+        this.hp = 32;
+        this.speed = 3.1;
+        this.damage = 12;
+        this.color = '#f97316';
+        this.xpValue = 4.5;
+        this.isShooter = true;
+        this.shootCooldown = 1.8 + Math.random() * 1.0;
+        this.telegraphTimer = 0;
+        this.telegraphDuration = 0.55;
+        this.telegraphTarget = null;
+        break;
+      case 'infernal_brute':
+        this.name = 'Pekelný Brut';
+        this.radius = 24;
+        this.hp = 190;
+        this.speed = 1.15;
+        this.damage = 32;
+        this.color = '#b91c1c';
+        this.xpValue = 12;
+        break;
       default:
         this.name = 'Nestvůra';
         this.radius = 15;
@@ -1139,6 +1269,118 @@ class Enemy {
           ctx.fillStyle = '#fef08a';
           ctx.fillRect(-5, -6, 3, 3);
           ctx.fillRect(2, -6, 3, 3);
+          break;
+        }
+
+        case 'cultist': {
+          // Temný kultista v purpurové kápi s runovým symbolem
+          ctx.fillStyle = '#4c1d95';
+          ctx.beginPath();
+          ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#a855f7';
+          ctx.lineWidth = 1.8;
+          ctx.stroke();
+
+          // Kápě
+          ctx.fillStyle = '#1e1b4b';
+          ctx.beginPath();
+          ctx.arc(0, -2, this.radius * 0.65, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Fialově žhnoucí oči
+          ctx.fillStyle = '#c084fc';
+          ctx.fillRect(-4, -3, 2.5, 2.5);
+          ctx.fillRect(2, -3, 2.5, 2.5);
+
+          // Magická hůl
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(9, -12, 3, 19);
+          ctx.fillStyle = '#a855f7';
+          ctx.beginPath();
+          ctx.arc(10.5, -13, 3.8, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+        }
+
+        case 'skeleton_archer': {
+          // Kostlivec s dlouhým lukem a toulcem
+          ctx.fillStyle = '#f8fafc';
+          ctx.beginPath();
+          ctx.arc(0, -3, this.radius * 0.8, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Oční důlky
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.arc(-3, -3, 2.2, 0, Math.PI * 2);
+          ctx.arc(3, -3, 2.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Luk v ruce
+          ctx.strokeStyle = '#92400e';
+          ctx.lineWidth = 2.2;
+          ctx.beginPath();
+          ctx.arc(9, 0, 10, -Math.PI / 2.2, Math.PI / 2.2);
+          ctx.stroke();
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(13, -7);
+          ctx.lineTo(13, 7);
+          ctx.stroke();
+          break;
+        }
+
+        case 'fire_imp': {
+          // Ohnivý diblík - rohatý malý démon se žlutýma očima
+          ctx.fillStyle = '#ea580c';
+          ctx.beginPath();
+          ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#f97316';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          // Rohy
+          ctx.fillStyle = '#451a03';
+          ctx.beginPath();
+          ctx.moveTo(-5, -6); ctx.lineTo(-9, -13); ctx.lineTo(-2, -8);
+          ctx.moveTo(5, -6); ctx.lineTo(9, -13); ctx.lineTo(2, -8);
+          ctx.fill();
+
+          // Žlutá očka a jiskry
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(-4, -2, 2.5, 2.5);
+          ctx.fillRect(2, -2, 2.5, 2.5);
+          break;
+        }
+
+        case 'infernal_brute': {
+          // Pekelný Brut - obrovský rohatý démon s ostnatým kyjem
+          ctx.fillStyle = '#991b1b';
+          ctx.beginPath();
+          ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#450a0a';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+
+          // Kamenné/obsidiánové pláty
+          ctx.fillStyle = '#18181b';
+          ctx.fillRect(-10, -6, 20, 12);
+
+          // Masivní rohy
+          ctx.fillStyle = '#7f1d1d';
+          ctx.beginPath();
+          ctx.moveTo(-10, -8); ctx.lineTo(-18, -18); ctx.lineTo(-4, -12);
+          ctx.moveTo(10, -8); ctx.lineTo(18, -18); ctx.lineTo(4, -12);
+          ctx.fill();
+
+          // Žhnoucí lávové oči
+          ctx.fillStyle = '#f97316';
+          ctx.fillRect(-6, -3, 4, 3);
+          ctx.fillRect(2, -3, 4, 3);
           break;
         }
 
@@ -1562,9 +1804,36 @@ class XPGem {
     this.x = x;
     this.y = y;
     this.value = value;
-    this.radius = 6.5;
-    this.color = value > 5 ? '#a855f7' : (value > 2 ? '#38bdf8' : '#34d399');
     this.sparkleTimer = Math.random();
+    this.updateVisualProperties();
+  }
+
+  updateVisualProperties() {
+    // Odstupňované vizuály krystalů (Smaragd -> Safír -> Ametyst -> Rubín -> Sluneční diamant)
+    if (this.value >= 40) {
+      this.color = '#fbbf24'; // Solární Zlatý Diamant
+      this.radius = 12;
+    } else if (this.value >= 18) {
+      this.color = '#ef4444'; // Karmínový Rubín
+      this.radius = 10;
+    } else if (this.value >= 8) {
+      this.color = '#a855f7'; // Temný Ametyst
+      this.radius = 8.5;
+    } else if (this.value >= 3) {
+      this.color = '#38bdf8'; // Zářící Safír
+      this.radius = 7.2;
+    } else {
+      this.color = '#34d399'; // Smaragd
+      this.radius = 6.2;
+    }
+  }
+
+  mergeWith(other) {
+    this.value += other.value;
+    this.updateVisualProperties();
+    if (window.particleSystem && window.particleSystem.spawnXPGemSparkle) {
+      window.particleSystem.spawnXPGemSparkle(this.x, this.y);
+    }
   }
 
   update(dt, player) {
@@ -2059,6 +2328,156 @@ class Obstacle {
   }
 }
 
+// Třída pro ohnivé stopy zanechávané hráčem (Fire Trail)
+class FirePatch {
+  constructor(x, y, damage, radius = 22, duration = 3.0) {
+    this.x = x;
+    this.y = y;
+    this.damage = damage;
+    this.radius = radius;
+    this.duration = duration;
+    this.maxDuration = duration;
+    this.tickTimer = 0;
+    this.tickInterval = 0.25; // škoda každých 250ms
+    this.flickerTimer = Math.random() * 10;
+  }
+
+  update(dt, enemies, registerDamage) {
+    this.duration -= dt;
+    this.flickerTimer += dt * 8;
+    this.tickTimer -= dt;
+
+    if (this.duration <= 0) return false;
+
+    if (this.tickTimer <= 0) {
+      this.tickTimer = this.tickInterval;
+      for (let i = 0; i < enemies.length; i++) {
+        const e = enemies[i];
+        const dist = Math.hypot(e.x - this.x, e.y - this.y);
+        if (dist <= this.radius + e.radius) {
+          registerDamage(e, this.damage);
+        }
+      }
+    }
+    return true;
+  }
+
+  draw(ctx, camera) {
+    const screenX = this.x - camera.x;
+    const screenY = this.y - camera.y;
+    const alpha = Math.min(1, this.duration / 0.5) * 0.85;
+
+    ctx.save();
+    ctx.translate(screenX, screenY);
+
+    // Žhnoucí ohnivá plocha
+    const flicker = Math.sin(this.flickerTimer) * 2;
+    const grad = ctx.createRadialGradient(0, 0, 4, 0, 0, this.radius + flicker);
+    grad.addColorStop(0, `rgba(255, 237, 74, ${alpha})`);
+    grad.addColorStop(0.4, `rgba(249, 115, 22, ${alpha * 0.85})`);
+    grad.addColorStop(0.8, `rgba(220, 38, 38, ${alpha * 0.5})`);
+    grad.addColorStop(1, 'rgba(127, 29, 29, 0)');
+
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.radius + flicker, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Vnitřní plamínky a jiskry
+    for (let i = 0; i < 3; i++) {
+      const ang = this.flickerTimer + (i * Math.PI * 2 / 3);
+      const fx = Math.cos(ang) * (this.radius * 0.4);
+      const fy = Math.sin(ang) * (this.radius * 0.4);
+      ctx.fillStyle = `rgba(254, 240, 138, ${alpha * 0.9})`;
+      ctx.beginPath();
+      ctx.arc(fx, fy, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+}
+
+// Třída pro rotující prorážející posvátné kříže (Holy Cross)
+class HolyCrossProjectile {
+  constructor(x, y, vx, vy, damage, size = 16, duration = 3.5) {
+    this.x = x;
+    this.y = y;
+    this.vx = vx;
+    this.vy = vy;
+    this.damage = damage;
+    this.radius = size;
+    this.duration = duration;
+    this.angle = Math.random() * Math.PI * 2;
+    this.rotationSpeed = 8.5; // rychlá rotace kříže
+    this.hitCooldowns = new Map(); // nepřítel -> cooldown na další tick zásahu
+  }
+
+  update(dt, enemies, registerDamage) {
+    this.duration -= dt;
+    if (this.duration <= 0) return false;
+
+    this.x += this.vx * dt * 60;
+    this.y += this.vy * dt * 60;
+    this.angle += this.rotationSpeed * dt;
+
+    // Odpočet cooldownů zásahu pro každého nepřítele (průraz)
+    for (const [enemy, cd] of this.hitCooldowns.entries()) {
+      if (cd <= dt) {
+        this.hitCooldowns.delete(enemy);
+      } else {
+        this.hitCooldowns.set(enemy, cd - dt);
+      }
+    }
+
+    // Kolize s nepřáteli (proráží všemi!)
+    for (let i = 0; i < enemies.length; i++) {
+      const e = enemies[i];
+      if (this.hitCooldowns.has(e)) continue;
+
+      const dist = Math.hypot(e.x - this.x, e.y - this.y);
+      if (dist <= this.radius + e.radius) {
+        this.hitCooldowns.set(e, 0.4); // znovu zasáhne za 0.4s
+        registerDamage(e, this.damage);
+        if (window.sound && window.sound.hit) window.sound.hit();
+        if (window.particleSystem && window.particleSystem.spawnExplosion) {
+          window.particleSystem.spawnExplosion(e.x, e.y, '#fde047', 6);
+        }
+      }
+    }
+
+    return true;
+  }
+
+  draw(ctx, camera) {
+    const screenX = this.x - camera.x;
+    const screenY = this.y - camera.y;
+
+    ctx.save();
+    ctx.translate(screenX, screenY);
+    ctx.rotate(this.angle);
+
+    // Zářící svatá aura
+    ctx.shadowColor = '#fbbf24';
+    ctx.shadowBlur = 12;
+
+    const armW = 5;
+    const armL = this.radius;
+
+    // Zlatý kříž
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(-armW / 2, -armL, armW, armL * 2);
+    ctx.fillRect(-armL, -armW / 2, armL * 2, armW);
+
+    // Vnitřní zářící jádro
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-armW / 4, -armL * 0.7, armW / 2, armL * 1.4);
+    ctx.fillRect(-armL * 0.7, -armW / 4, armL * 1.4, armW / 2);
+
+    ctx.restore();
+  }
+}
+
 window.Player = Player;
 window.Projectile = Projectile;
 window.EnemyProjectile = EnemyProjectile;
@@ -2067,3 +2486,5 @@ window.BossEnemy = BossEnemy;
 window.XPGem = XPGem;
 window.GoldCoin = GoldCoin;
 window.Obstacle = Obstacle;
+window.FirePatch = FirePatch;
+window.HolyCrossProjectile = HolyCrossProjectile;

@@ -145,6 +145,18 @@ const SVG_ICONS = {
     <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.5 1.9 4.6 4.4 4.9.6 1.5 2 2.6 3.6 3V19H7v2h10v-2h-4v-3.1c1.6-.4 3-1.5 3.6-3 2.5-.3 4.4-2.4 4.4-4.9V7c0-1.1-.9-2-2-2z" fill="#D4AF37" stroke="#4A3408" stroke-width="1.2"/>
   </svg>`,
 
+  // Oheň / Fire Trail
+  fire: `<svg viewBox="0 0 24 24" width="24" height="24" class="ic svg-fire" aria-hidden="true">
+    <path d="M12 2c1 3.5 4 6 4 9.5a4 4 0 0 1-8 0c0-1.5.5-3 1.5-4.5 1 2 2.5 3 2.5 5 0-3 0-7 0-10z" fill="#F97316" stroke="#9A3412" stroke-width="1.2"/>
+    <path d="M12 9c.8 1.5 2 3 2 4.8a2 2 0 1 1-4 0c0-1.2.6-2.5 2-4.8z" fill="#FEF08A"/>
+  </svg>`,
+
+  // Posvátný kříž / Holy Cross
+  cross: `<svg viewBox="0 0 24 24" width="24" height="24" class="ic svg-cross" aria-hidden="true">
+    <path d="M10 2h4v5h5v4h-5v11h-4v-11h-5v-4h5z" fill="#FDE047" stroke="#854D0E" stroke-width="1.3" stroke-linejoin="round"/>
+    <circle cx="12" cy="9" r="2" fill="#FFF"/>
+  </svg>`,
+
   // Zvuk zapnutý
   soundOn: `<svg viewBox="0 0 24 24" width="20" height="20" class="ic" fill="currentColor" aria-hidden="true">
     <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.8-1-3.3-2.5-4v8c1.5-.7 2.5-2.2 2.5-4zM14 3.2v2.1c2.9.9 5 3.5 5 6.7s-2.1 5.8-5 6.7v2.1c4-.9 7-4.5 7-8.8s-3-7.9-7-8.8z"/>

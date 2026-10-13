@@ -157,7 +157,8 @@ body{
   color:var(--gold);
   padding:3px 18px;
 }
-.active-buffs{display:flex;gap:6px}
+.hud-right{display:flex;align-items:center;gap:8px;flex-shrink:0;z-index:150}
+.active-buffs{display:flex;gap:6px;flex-wrap:wrap}
 .buff-mini-tag{
   width:38px;
   height:38px;
@@ -197,6 +198,9 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
+  position:relative;
+  z-index:150;
+  flex-shrink:0;
 }
 .icon-btn:hover{filter:brightness(1.25);transform:translateY(-1px)}
 .icon-btn svg{width:20px;height:20px}
@@ -406,7 +410,38 @@ kbd{background:var(--stone);border:1px solid var(--gold-d);border-radius:3px;pad
   box-shadow:0 0 12px rgba(212,175,55,.35);
 }
 
-.shop-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:22px}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:12px}
+#shop-items-container, #shop-skins-container {
+  max-height: 56vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 6px 4px;
+  margin-bottom: 16px;
+}
+#shop-items-container::-webkit-scrollbar,
+#shop-skins-container::-webkit-scrollbar,
+.modal::-webkit-scrollbar {
+  width: 7px;
+}
+#shop-items-container::-webkit-scrollbar-track,
+#shop-skins-container::-webkit-scrollbar-track,
+.modal::-webkit-scrollbar-track {
+  background: rgba(10, 8, 5, 0.6);
+  border-radius: 4px;
+}
+#shop-items-container::-webkit-scrollbar-thumb,
+#shop-skins-container::-webkit-scrollbar-thumb,
+.modal::-webkit-scrollbar-thumb {
+  background: var(--gold-d);
+  border-radius: 4px;
+}
+#shop-items-container::-webkit-scrollbar-thumb:hover,
+#shop-skins-container::-webkit-scrollbar-thumb:hover,
+.modal::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
+}
+
 .shop-item-card{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 12px;background:linear-gradient(#35413B,#252E2A);border:2px solid rgba(201,164,50,.6);border-radius:6px;box-shadow:0 8px 18px rgba(0,0,0,.45)}
 .shop-item-card.maxed{border-color:var(--green);opacity:.85}
 .shop-item-icon{font-size:36px;display:flex;align-items:center;justify-content:center}
@@ -436,6 +471,63 @@ kbd{background:var(--stone);border:1px solid var(--gold-d);border-radius:3px;pad
 .skin-btn-equip{
   background:linear-gradient(#2563eb,#1e3a8a) padding-box,linear-gradient(#93c5fd,#3b82f6) border-box;
   color:#eff6ff;
+}
+
+/* Hlavní Menu - Centrální mřížka a tlačítka */
+.main-menu-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+  margin:16px 0 20px;
+}
+.main-menu-btn{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 18px;
+  text-align:left;
+  min-height:74px;
+}
+.main-menu-btn .menu-btn-icon{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.main-menu-btn .menu-btn-icon .ic{
+  width:30px;
+  height:30px;
+}
+.main-menu-btn .menu-btn-text{
+  display:flex;
+  flex-direction:column;
+}
+.main-menu-btn .menu-btn-title{
+  font:700 20px var(--f-title);
+  letter-spacing:0.4px;
+  color:var(--gold);
+}
+.main-menu-btn .menu-btn-sub{
+  font:400 13px var(--f-text);
+  color:rgba(241,228,195,.82);
+  line-height:1.2;
+  margin-top:2px;
+}
+.endless-menu-btn{
+  background:linear-gradient(135deg,#7f1d1d,#450a0a) padding-box,linear-gradient(#fca5a5,#ef4444 50%,#991b1b) border-box !important;
+}
+.endless-menu-btn:hover{
+  box-shadow:0 0 20px rgba(239,68,68,.5) !important;
+}
+.endless-stat-highlight{
+  border-color:rgba(239,68,68,.5) !important;
+  background:rgba(127,29,29,.25) !important;
+}
+.stats-modal-card{
+  max-width:680px;
+}
+.compact-instructions{
+  margin-bottom:8px;
 }
 
 .svg-inline-coin{display:inline-flex;vertical-align:middle}
@@ -530,6 +622,21 @@ kbd{background:var(--stone);border:1px solid var(--gold-d);border-radius:3px;pad
   .stat-label{font-size:12px;line-height:1.15}
   .stat-value{font-size:20px;line-height:1.1}
 
+  /* Hlavní menu na mobilu */
+  .main-menu-grid{
+    grid-template-columns:1fr;
+    gap:8px;
+    margin:10px 0 12px;
+  }
+  .main-menu-btn{
+    padding:10px 12px;
+    min-height:56px;
+    gap:10px;
+  }
+  .main-menu-btn .menu-btn-title{font-size:17px}
+  .main-menu-btn .menu-btn-sub{font-size:11.5px}
+  .main-menu-btn .menu-btn-icon .ic{width:24px;height:24px}
+
   /* Kompaktní rámeček ovládání */
   .instructions-box{
     padding:8px 10px;
@@ -542,7 +649,7 @@ kbd{background:var(--stone);border:1px solid var(--gold-d);border-radius:3px;pad
   kbd{font-size:13px;padding:1px 5px}
 
   /* Přilepená spodní akční tlačítka pro okamžitou přístupnost na mobilu */
-  .start-actions-row, .death-actions, .shop-actions{
+  .start-actions-row, .death-actions, .shop-actions, .stats-actions{
     position:sticky;
     bottom:-14px;
     background:linear-gradient(to top, rgba(20,16,12,.98) 78%, rgba(20,16,12,0));
@@ -552,11 +659,12 @@ kbd{background:var(--stone);border:1px solid var(--gold-d);border-radius:3px;pad
     backdrop-filter:blur(4px);
     display:flex;
     gap:8px;
-    flex-wrap:nowrap;
+    flex-wrap:wrap;
   }
   .start-actions-row .action-btn,
   .death-actions .action-btn,
-  .shop-actions .action-btn{
+  .shop-actions .action-btn,
+  .stats-actions .action-btn{
     flex:1;
     min-width:0;
     padding:12px 14px;
@@ -584,6 +692,7 @@ kbd{background:var(--stone);border:1px solid var(--gold-d);border-radius:3px;pad
 
   /* Obchod na mobilu */
   .shop-grid{grid-template-columns:1fr;gap:10px}
+  #shop-items-container, #shop-skins-container{max-height:50vh}
   .shop-gold-display{font-size:16px;margin-bottom:12px}
   .shop-gold-display strong{font-size:24px}
   .shop-item-card{padding:12px 10px}
@@ -599,8 +708,11 @@ kbd{background:var(--stone);border:1px solid var(--gold-d);border-radius:3px;pad
 
 /* Velmi malé displeje (např. iPhone SE, starší smartphony ≤ 480px) */
 @media (max-width:480px){
-  .game-logo svg{max-height:72px}
-  .flavor-text{font-size:12.5px;margin-bottom:6px}
+  .game-logo svg{max-height:68px}
+  .flavor-text{font-size:12px;margin-bottom:6px}
+  .main-menu-btn{padding:8px 10px;min-height:50px}
+  .main-menu-btn .menu-btn-title{font-size:15px}
+  .main-menu-btn .menu-btn-sub{font-size:11px}
   .stats-overview-box{padding:6px 8px;margin-bottom:6px}
   .stat-card{padding:3px 6px;gap:4px}
   .stat-label{font-size:11px}
