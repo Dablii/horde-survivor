@@ -449,6 +449,8 @@ class Game {
   }
 
   openStatsModal() {
+    const startModal = document.getElementById('start-modal');
+    if (startModal) startModal.classList.add('hidden');
     const modal = document.getElementById('stats-modal');
     if (modal) modal.classList.remove('hidden');
     this.updateStatsUI();
@@ -457,6 +459,10 @@ class Game {
   closeStatsModal() {
     const modal = document.getElementById('stats-modal');
     if (modal) modal.classList.add('hidden');
+    if (this.state === 'start' || this.state === 'gameover' || this.state === 'victory') {
+      const startModal = document.getElementById('start-modal');
+      if (startModal) startModal.classList.remove('hidden');
+    }
   }
 
   startGame() {
@@ -1633,8 +1639,10 @@ class Game {
   }
 
   openShopModal() {
+    const startModal = document.getElementById('start-modal');
+    if (startModal) startModal.classList.add('hidden');
     const modal = document.getElementById('shop-modal');
-    modal.classList.remove('hidden');
+    if (modal) modal.classList.remove('hidden');
     this.setShopTab(this.shopTab || 'upgrades');
   }
 
@@ -1662,10 +1670,12 @@ class Game {
 
   closeShopModal() {
     const modal = document.getElementById('shop-modal');
-    modal.classList.add('hidden');
-    // Pokud jsme v menu, ukážeme start-modal
+    if (modal) modal.classList.add('hidden');
+    // Pokud jsme v menu nebo po skončení runu, ukážeme start-modal
     if (this.state === 'start' || this.state === 'gameover' || this.state === 'victory') {
-      document.getElementById('start-modal').classList.remove('hidden');
+      this.state = 'start';
+      const startModal = document.getElementById('start-modal');
+      if (startModal) startModal.classList.remove('hidden');
     }
     this.updateStatsUI();
   }

@@ -222,6 +222,9 @@ body{
   padding:16px 8px;
 }
 .modal.hidden{display:none !important}
+#shop-modal, #stats-modal, #pause-modal, #levelup-modal, #stage-clear-modal, #gameover-modal, #victory-modal {
+  z-index: 110;
+}
 
 .modal-card{
   position:relative;
